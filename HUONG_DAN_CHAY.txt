@@ -1,0 +1,79 @@
+========================================
+   HƯỚNG DẪN CHẠY GAME BÀI ONLINE
+========================================
+
+CÁCH 1: Chạy bằng script tự động (Dễ nhất)
+-------------------------------------------
+1. Double-click vào file: start.bat
+   (Hoặc chạy: .\start.ps1 trong PowerShell)
+
+2. Đợi 10-20 giây để server và client khởi động
+
+3. Mở trình duyệt và vào: http://localhost:1999
+
+
+CÁCH 2: Chạy thủ công bằng lệnh
+--------------------------------
+Mở 2 cửa sổ Terminal/PowerShell:
+
+Terminal 1 - Chạy Server:
+  cd server
+  node index.js
+
+Terminal 2 - Chạy Client:
+  cd client
+  npm start
+
+Sau đó mở trình duyệt: http://localhost:1999
+
+
+CÁCH 3: Chạy cùng lúc bằng npm
+-------------------------------
+npm run dev
+
+Sau đó mở trình duyệt: http://localhost:1999
+
+
+========================================
+   THÔNG TIN QUAN TRỌNG
+========================================
+
+- Server chạy trên: port 2023
+- Client chạy trên: port 1999
+- Truy cập game: http://localhost:1999
+
+Để chơi từ thiết bị khác (cùng WiFi):
+- Tìm IP của máy: npm run get-ip
+- Truy cập: http://YOUR_IP:1999
+- Ví dụ: http://192.168.3.69:1999
+
+
+========================================
+   TROUBLESHOOTING
+========================================
+
+Nếu gặp lỗi "EADDRINUSE: address already in use":
+- Port đang bị chiếm bởi process khác
+- Chạy script: .\kill-port.ps1 -Port 2023
+- Hoặc: .\restart-server.ps1 (tự động kill và restart)
+
+Nếu gặp lỗi "Cannot find module" khi chạy client:
+- node_modules bị hỏng hoặc thiếu file
+- Chạy script: .\fix-client-complete.ps1 (Khuyến nghị - fix hoàn chỉnh)
+- Hoặc: .\fix-client.ps1 (fix nhanh)
+- Hoặc thủ công: 
+  cd client
+  Remove-Item -Recurse -Force node_modules
+  npm cache clean --force
+  npm install --legacy-peer-deps
+
+Nếu không chạy được:
+1. Đảm bảo đã cài đặt: npm run install-all
+2. Kiểm tra port 1999 và 2023 có bị chiếm không
+3. Kiểm tra firewall Windows
+4. Xem log trong các cửa sổ terminal để biết lỗi
+
+Scripts hữu ích:
+- kill-port.ps1 - Kill process trên port cụ thể
+- restart-server.ps1 - Restart server tự động
+

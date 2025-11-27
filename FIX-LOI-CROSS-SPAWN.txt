@@ -1,0 +1,108 @@
+========================================
+   HƯỚNG DẪN FIX LỖI CROSS-SPAWN
+========================================
+
+LỖI: Cannot find module './lib/enoent'
+Nguyên nhân: cross-spawn module bị hỏng hoặc thiếu file
+
+========================================
+   CÁCH 1: Fix nhanh (Thử trước)
+========================================
+
+Mở PowerShell trong thư mục client và chạy:
+
+cd client
+Remove-Item -Recurse -Force node_modules\cross-spawn
+npm install cross-spawn@7.0.3 --save-dev --force
+npm start
+
+
+========================================
+   CÁCH 2: Fix bằng script
+========================================
+
+Chạy script đã tạo:
+.\fix-cross-spawn.ps1
+
+Hoặc:
+.\fix-client-complete.ps1
+
+
+========================================
+   CÁCH 3: Cài đặt lại hoàn toàn (Chắc chắn nhất)
+========================================
+
+Mở PowerShell trong thư mục project:
+
+# Bước 1: Vào thư mục client
+cd client
+
+# Bước 2: Xóa node_modules và package-lock.json
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
+
+# Bước 3: Clear npm cache
+npm cache clean --force
+
+# Bước 4: Cài đặt lại (mất 3-5 phút)
+npm install --legacy-peer-deps
+
+# Bước 5: Kiểm tra và fix cross-spawn nếu cần
+if (-not (Test-Path "node_modules\cross-spawn\lib\enoent.js")) {
+    npm install cross-spawn@7.0.3 --save-dev --force
+}
+
+# Bước 6: Chạy lại
+npm start
+
+
+========================================
+   CÁCH 4: Sử dụng yarn (Nếu npm không work)
+========================================
+
+# Cài yarn nếu chưa có
+npm install -g yarn
+
+# Vào thư mục client
+cd client
+
+# Xóa node_modules
+Remove-Item -Recurse -Force node_modules
+
+# Cài bằng yarn
+yarn install
+
+# Chạy
+yarn start
+
+
+========================================
+   CÁCH 5: Downgrade react-scripts
+========================================
+
+Nếu các cách trên không work, thử downgrade react-scripts:
+
+cd client
+npm install react-scripts@4.0.3 --save-dev --force
+npm start
+
+
+========================================
+   KIỂM TRA SAU KHI FIX
+========================================
+
+Sau khi fix, kiểm tra file có tồn tại không:
+
+Test-Path "node_modules\cross-spawn\lib\enoent.js"
+
+Nếu trả về True, thì đã fix thành công!
+
+
+========================================
+   LƯU Ý
+========================================
+
+- Quá trình cài đặt có thể mất 3-5 phút
+- Đảm bảo có kết nối internet
+- Nếu vẫn lỗi, thử restart máy và chạy lại
+

@@ -1,0 +1,80 @@
+.covay-board-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #dcb35c;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.covay-board {
+  display: grid;
+  gap: 0;
+  background: #dcb35c;
+  border: 2px solid #8b6914;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.board-cell {
+  width: 25px;
+  height: 25px;
+  position: relative;
+  border: 1px solid #8b6914;
+  background: #dcb35c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-cell.clickable {
+  cursor: pointer;
+}
+
+.board-cell.clickable:hover {
+  background: #e8c97a;
+}
+
+.board-cell.star-point::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #000;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.stone {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  position: absolute;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stone-black {
+  background: radial-gradient(circle at 30% 30%, #666, #000);
+  border: 1px solid #000;
+}
+
+.stone-white {
+  background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+  border: 1px solid #999;
+}
+
+@media (max-width: 768px) {
+  .board-cell {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .stone {
+    width: 16px;
+    height: 16px;
+  }
+}
+

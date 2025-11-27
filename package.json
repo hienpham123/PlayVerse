@@ -1,0 +1,20 @@
+{
+  "name": "game-bai",
+  "version": "1.0.0",
+  "description": "Game bài online - Tiến lên, Phỏm",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && node index.js",
+    "client": "cd client && npm start",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "get-ip": "node get-ip.js"
+  },
+  "keywords": ["game", "bai", "tiến lên", "phỏm"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
