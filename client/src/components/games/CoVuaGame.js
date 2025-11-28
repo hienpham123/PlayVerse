@@ -55,6 +55,37 @@ function CoVuaGame({ user, room, gameState, onAction }) {
     }
   };
 
+  const handleUndo = () => {
+    // Kiểm tra xem có thể undo không (nước cờ cuối cùng phải là của người chơi này)
+    if (!gameState || !gameState.moveHistory || gameState.moveHistory.length === 0) {
+      alert('Không có nước cờ nào để quay lại');
+      return;
+    }
+
+    const lastMove = gameState.moveHistory[gameState.moveHistory.length - 1];
+    
+    if (lastMove.playerId !== user.id) {
+      alert('Bạn chỉ có thể quay lại nước cờ của chính mình');
+      return;
+    }
+
+    if (gameState.status !== 'playing') {
+      alert('Không thể quay lại khi game đã kết thúc');
+      return;
+    }
+
+    if (window.confirm('Bạn có chắc muốn quay lại nước cờ vừa đi?')) {
+      onAction('undo', {});
+    }
+  };
+
+  // Kiểm tra xem có thể undo không
+  const canUndo = gameState && 
+                  gameState.moveHistory && 
+                  gameState.moveHistory.length > 0 &&
+                  gameState.moveHistory[gameState.moveHistory.length - 1].playerId === user.id &&
+                  gameState.status === 'playing';
+
   const getStatusMessage = () => {
     if (!gameState) return '';
     
@@ -95,54 +126,83 @@ function CoVuaGame({ user, room, gameState, onAction }) {
               <div className="player-name">
                 {room.players.find(p => p.id === user.id)?.username} ({gameState.myColor === 'white' ? 'Trắng' : 'Đen'})
               </div>
-              {gameState.capturedPieces && gameState.capturedPieces.mine && gameState.capturedPieces.mine.length > 0 && (
-                <div className="captured-pieces">
-                  Đã bắt: {gameState.capturedPieces.mine.map(p => {
-                    const symbols = {
-                      'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
-                      'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
-                    };
-                    return symbols[p] || p;
-                  }).join(' ')}
-                </div>
-              )}
             </div>
             <div className={`player-info-chess ${gameState.currentPlayerId !== user.id ? 'active' : ''}`}>
               <div className="player-name">
                 {room.players.find(p => p.id !== user.id)?.username} ({gameState.myColor === 'white' ? 'Đen' : 'Trắng'})
               </div>
-              {gameState.capturedPieces && gameState.capturedPieces.opponent && gameState.capturedPieces.opponent.length > 0 && (
-                <div className="captured-pieces">
-                  Đã bắt: {gameState.capturedPieces.opponent.map(p => {
-                    const symbols = {
-                      'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
-                      'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙'
-                    };
-                    return symbols[p] || p;
-                  }).join(' ')}
-                </div>
-              )}
             </div>
           </div>
         )}
       </div>
 
-      {gameState && gameState.board && (
-        <ChessBoard
-          board={gameState.board}
-          myColor={gameState.myColor}
-          onCellClick={handleCellClick}
-          currentPlayerId={gameState.currentPlayerId}
-          myId={user.id}
-          validMoves={validMoves}
-        />
-      )}
+      <div className="chess-board-wrapper">
+        {/* Quân đã bắt bên trái (đối thủ - quân đen) */}
+        {gameState && gameState.capturedPieces && gameState.capturedPieces.opponent && gameState.capturedPieces.opponent.length > 0 && (
+          <div className="captured-pieces-side captured-pieces-left">
+            <div className="captured-pieces-title">Đã bắt</div>
+            <div className="captured-pieces-list">
+              {gameState.capturedPieces.opponent.map((p, idx) => {
+                const symbols = {
+                  'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
+                  'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+                };
+                return (
+                  <span key={idx} className="captured-piece">
+                    {symbols[p] || p}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-      {isMyTurn && gameState.status === 'playing' && (
+        {/* Bàn cờ */}
+        {gameState && gameState.board && (
+          <ChessBoard
+            board={gameState.board}
+            myColor={gameState.myColor}
+            onCellClick={handleCellClick}
+            currentPlayerId={gameState.currentPlayerId}
+            myId={user.id}
+            validMoves={validMoves}
+            lastMove={gameState.lastMove}
+          />
+        )}
+
+        {/* Quân đã bắt bên phải (của mình - quân trắng) */}
+        {gameState && gameState.capturedPieces && gameState.capturedPieces.mine && gameState.capturedPieces.mine.length > 0 && (
+          <div className="captured-pieces-side captured-pieces-right">
+            <div className="captured-pieces-title">Đã bắt</div>
+            <div className="captured-pieces-list">
+              {gameState.capturedPieces.mine.map((p, idx) => {
+                const symbols = {
+                  'K': '♚', 'Q': '♛', 'R': '♜', 'B': '♝', 'N': '♞', 'P': '♟',
+                  'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+                };
+                return (
+                  <span key={idx} className="captured-piece">
+                    {symbols[p] || p}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {(isMyTurn || canUndo) && gameState.status === 'playing' && (
         <div className="action-buttons">
-          <button className="btn btn-danger" onClick={handleResign}>
-            Đầu hàng
-          </button>
+          {canUndo && (
+            <button className="btn btn-secondary" onClick={handleUndo} style={{ marginRight: '10px' }}>
+              ↶ Quay lại
+            </button>
+          )}
+          {isMyTurn && (
+            <button className="btn btn-danger" onClick={handleResign}>
+              Đầu hàng
+            </button>
+          )}
         </div>
       )}
 

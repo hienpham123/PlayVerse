@@ -6,7 +6,7 @@ const PIECE_SYMBOLS = {
   'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
 };
 
-function ChessBoard({ board, myColor, onCellClick, currentPlayerId, myId, validMoves = [] }) {
+function ChessBoard({ board, myColor, onCellClick, currentPlayerId, myId, validMoves = [], lastMove = null }) {
   const [selectedCell, setSelectedCell] = useState(null);
   const isMyTurn = currentPlayerId === myId;
   const isWhite = myColor === 'white';
@@ -83,10 +83,17 @@ function ChessBoard({ board, myColor, onCellClick, currentPlayerId, myId, validM
                          piece.length > 0 &&
                          PIECE_SYMBOLS[piece];
 
+    // Kiểm tra xem đây có phải là nước cờ vừa đi không
+    const isLastMoveFrom = lastMove && lastMove.from && 
+                          lastMove.from.row === row && lastMove.from.col === col;
+    const isLastMoveTo = lastMove && lastMove.to && 
+                        lastMove.to.row === row && lastMove.to.col === col;
+    const isLastMove = isLastMoveFrom || isLastMoveTo;
+
     return (
       <div
         key={`${row}-${col}`}
-        className={`chess-cell ${isLight ? 'light' : 'dark'} ${isSelected ? 'selected' : ''} ${isValidMoveTarget ? 'valid-move' : ''} ${isClickable ? 'clickable' : ''}`}
+        className={`chess-cell ${isLight ? 'light' : 'dark'} ${isSelected ? 'selected' : ''} ${isValidMoveTarget ? 'valid-move' : ''} ${isLastMove ? 'last-move' : ''} ${isClickable ? 'clickable' : ''}`}
         onClick={() => handleCellClick(row, col)}
       >
         {isValidPiece ? (

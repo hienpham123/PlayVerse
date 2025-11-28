@@ -70,7 +70,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
   const getGameTypeName = (type) => {
     const names = {
       'tienlen': 'Tiến lên',
-      'phom': 'Phỏm',
+      'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
       'covua': 'Cờ vua'
     };
@@ -100,7 +100,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
               style={{ width: 'auto', margin: 0 }}
             >
               <option value="tienlen">Tiến lên</option>
-              <option value="phom">Phỏm</option>
+              <option value="samloc">Sâm lốc</option>
               <option value="covay">Cờ vây</option>
               <option value="covua">Cờ vua</option>
             </select>

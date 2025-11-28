@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { socket } from '../services/socket';
 import TienLenGame from './games/TienLenGame';
-import PhomGame from './games/PhomGame';
+import SamLocGame from './games/SamLocGame';
 import CoVayGame from './games/CoVayGame';
 import CoVuaGame from './games/CoVuaGame';
 import './GameRoom.css';
@@ -54,6 +54,9 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       setRoom(updatedRoom);
       if (updatedRoom.gameState) {
         setGameState(updatedRoom.gameState);
+      } else {
+        // Clear gameState nếu không có (ví dụ khi game finished)
+        setGameState(null);
       }
       setError('');
       // Lưu room mới vào localStorage
@@ -118,7 +121,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
   const getGameTypeName = (type) => {
     const names = {
       'tienlen': 'Tiến lên',
-      'phom': 'Phỏm',
+      'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
       'covua': 'Cờ vua'
     };
@@ -229,8 +232,8 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
             />
           )}
 
-          {room.gameType === 'phom' && gameState && (
-            <PhomGame
+          {room.gameType === 'samloc' && gameState && (
+            <SamLocGame
               user={user}
               room={room}
               gameState={gameState}
@@ -291,9 +294,35 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
               </h3>
             </div>
           )}
-          <button className="btn btn-primary" onClick={handleLeave} style={{ marginTop: '20px' }}>
-            Quay về Lobby
-          </button>
+          <div className="players-list" style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <h4>Người chơi trong phòng:</h4>
+            {room.players.map(player => (
+              <div key={player.id} className="player-item">
+                {player.username} {player.id === room.hostId && '(Chủ phòng)'}
+              </div>
+            ))}
+          </div>
+          {room.hostId === user.id ? (
+            <div>
+              <button 
+                className="btn btn-success" 
+                onClick={handleStartGame}
+                style={{ marginRight: '10px' }}
+              >
+                Chơi lại
+              </button>
+              <button className="btn btn-secondary" onClick={handleLeave}>
+                Rời phòng
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p style={{ marginBottom: '10px' }}>Đang chờ chủ phòng bắt đầu ván mới...</p>
+              <button className="btn btn-secondary" onClick={handleLeave}>
+                Rời phòng
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

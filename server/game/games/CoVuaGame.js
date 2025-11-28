@@ -13,6 +13,7 @@ class CoVuaGame {
     this.status = 'playing'; // playing, check, checkmate, stalemate, finished
     this.winner = null;
     this.inCheck = false;
+    this.lastMove = null; // Nước cờ vừa đi để highlight
   }
 
   createInitialBoard() {
@@ -71,6 +72,7 @@ class CoVuaGame {
         opponent: this.capturedPieces[this.players[1 - playerIndex].id]
       },
       moveHistory: this.moveHistory.slice(-10),
+      lastMove: this.lastMove,
       inCheck: this.inCheck,
       status: this.status,
       winner: this.winner,
@@ -80,6 +82,11 @@ class CoVuaGame {
   }
 
   handleAction(playerId, action, data) {
+    if (action === 'undo') {
+      // Undo không cần check lượt chơi, ai cũng có thể undo nước cờ của mình
+      return this.undoMove(playerId);
+    }
+
     if (this.players[this.currentPlayerIndex].id !== playerId) {
       return { success: false, error: 'Chưa đến lượt bạn' };
     }
@@ -122,35 +129,59 @@ class CoVuaGame {
       return { success: false, error: 'Nước đi không hợp lệ' };
     }
 
-    // Make the move
-    const capturedPiece = this.board[toRow][toCol];
-    if (capturedPiece && capturedPiece !== 0) {
-      this.capturedPieces[playerId].push(capturedPiece);
-    }
+    // Lưu trạng thái trước khi move để có thể undo
+    const previousCastlingRights = JSON.parse(JSON.stringify(this.castlingRights));
+    const previousEnPassantTarget = this.enPassantTarget ? { ...this.enPassantTarget } : null;
+    const previousStatus = this.status;
+    const previousInCheck = this.inCheck;
 
     // Handle special moves
     const pieceType = piece.toUpperCase();
+    let isCastling = false;
+    let castlingInfo = null;
+    let isEnPassant = false;
+    let enPassantCapturedRow = null;
+    let promotionPiece = null;
+    let capturedPiece = this.board[toRow][toCol]; // Quân cờ bị bắt (nếu có)
     
     // Castling
     if (pieceType === 'K' && Math.abs(toCol - fromCol) === 2) {
+      isCastling = true;
+      const isKingSide = toCol > fromCol;
+      const rookCol = isKingSide ? 7 : 0;
+      const newRookCol = isKingSide ? toCol - 1 : toCol + 1;
+      castlingInfo = {
+        rookFrom: { row: fromRow, col: rookCol },
+        rookTo: { row: fromRow, col: newRookCol },
+        rookPiece: this.board[fromRow][rookCol]
+      };
+      capturedPiece = 0; // Castling không bắt quân
       this.handleCastling(fromRow, fromCol, toRow, toCol);
     }
     // En passant
     else if (pieceType === 'P' && this.enPassantTarget && 
              toRow === this.enPassantTarget.row && toCol === this.enPassantTarget.col) {
-      const capturedPawnRow = isWhite ? toRow + 1 : toRow - 1;
-      this.capturedPieces[playerId].push(this.board[capturedPawnRow][toCol]);
-      this.board[capturedPawnRow][toCol] = 0;
+      isEnPassant = true;
+      enPassantCapturedRow = isWhite ? toRow + 1 : toRow - 1;
+      capturedPiece = this.board[enPassantCapturedRow][toCol]; // Quân cờ thực sự bị bắt
+      this.capturedPieces[playerId].push(capturedPiece);
+      this.board[toRow][toCol] = this.board[fromRow][fromCol];
+      this.board[fromRow][fromCol] = 0;
+      this.board[enPassantCapturedRow][toCol] = 0;
     }
     // Regular move
     else {
+      // Xử lý captured piece cho move thường
+      if (capturedPiece && capturedPiece !== 0) {
+        this.capturedPieces[playerId].push(capturedPiece);
+      }
       this.board[toRow][toCol] = this.board[fromRow][fromCol];
       this.board[fromRow][fromCol] = 0;
     }
 
     // Pawn promotion
     if (pieceType === 'P' && ((isWhite && toRow === 0) || (!isWhite && toRow === 7))) {
-      const promotionPiece = promotion || 'Q'; // Default to Queen
+      promotionPiece = promotion || 'Q'; // Default to Queen
       this.board[toRow][toCol] = isWhite ? promotionPiece : promotionPiece.toLowerCase();
     }
 
@@ -160,14 +191,31 @@ class CoVuaGame {
     // Update en passant target
     this.updateEnPassantTarget(pieceType, fromRow, fromCol, toRow, toCol);
 
-    // Record move
-    this.moveHistory.push({
+    // Record move với đầy đủ thông tin để undo
+    const moveRecord = {
       playerId,
       from: { row: fromRow, col: fromCol },
       to: { row: toRow, col: toCol },
       piece,
-      captured: capturedPiece
-    });
+      captured: capturedPiece,
+      previousCastlingRights,
+      previousEnPassantTarget,
+      previousStatus,
+      previousInCheck,
+      isCastling,
+      castlingInfo,
+      isEnPassant,
+      enPassantCapturedRow,
+      promotionPiece
+    };
+    
+    this.moveHistory.push(moveRecord);
+
+    // Set lastMove để highlight
+    this.lastMove = {
+      from: { row: fromRow, col: fromCol },
+      to: { row: toRow, col: toCol }
+    };
 
     // Check for check/checkmate
     this.nextTurn();
@@ -180,6 +228,104 @@ class CoVuaGame {
         to: { row: toRow, col: toCol },
         piece,
         captured: capturedPiece
+      }
+    };
+  }
+
+  undoMove(playerId) {
+    // Kiểm tra có nước cờ nào để undo không
+    if (this.moveHistory.length === 0) {
+      return { success: false, error: 'Không có nước cờ nào để quay lại' };
+    }
+
+    // Lấy nước cờ cuối cùng
+    const lastMove = this.moveHistory[this.moveHistory.length - 1];
+
+    // Chỉ cho phép undo nước cờ của chính người chơi đó
+    if (lastMove.playerId !== playerId) {
+      return { success: false, error: 'Bạn chỉ có thể quay lại nước cờ của chính mình' };
+    }
+
+    // Khôi phục castling rights
+    this.castlingRights = lastMove.previousCastlingRights;
+
+    // Khôi phục en passant target
+    this.enPassantTarget = lastMove.previousEnPassantTarget;
+
+    // Khôi phục status và inCheck
+    this.status = lastMove.previousStatus;
+    this.inCheck = lastMove.previousInCheck;
+    this.winner = null; // Reset winner khi undo
+
+    // Undo castling
+    if (lastMove.isCastling && lastMove.castlingInfo) {
+      // Di chuyển vua về vị trí cũ
+      this.board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
+      this.board[lastMove.to.row][lastMove.to.col] = 0;
+      // Di chuyển xe về vị trí cũ
+      const { rookFrom, rookTo, rookPiece } = lastMove.castlingInfo;
+      this.board[rookFrom.row][rookFrom.col] = rookPiece;
+      this.board[rookTo.row][rookTo.col] = 0;
+    }
+    // Undo en passant
+    else if (lastMove.isEnPassant && lastMove.enPassantCapturedRow !== null) {
+      // Di chuyển quân cờ về vị trí cũ
+      this.board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
+      this.board[lastMove.to.row][lastMove.to.col] = 0;
+      // Khôi phục quân cờ bị bắt (dùng capturedPiece đã lưu)
+      if (lastMove.captured && lastMove.captured !== 0) {
+        this.board[lastMove.enPassantCapturedRow][lastMove.to.col] = lastMove.captured;
+        // Xóa khỏi captured pieces
+        if (this.capturedPieces[lastMove.playerId].length > 0) {
+          this.capturedPieces[lastMove.playerId].pop();
+        }
+      }
+    }
+    // Undo move thường
+    else {
+      // Di chuyển quân cờ về vị trí cũ
+      // Nếu có promotion, phải khôi phục lại tốt
+      const pieceToRestore = lastMove.promotionPiece ? 
+        (lastMove.piece.toUpperCase() === lastMove.piece ? 'P' : 'p') : 
+        lastMove.piece;
+      this.board[lastMove.from.row][lastMove.from.col] = pieceToRestore;
+      
+      // Khôi phục quân cờ bị bắt (nếu có)
+      if (lastMove.captured && lastMove.captured !== 0) {
+        this.board[lastMove.to.row][lastMove.to.col] = lastMove.captured;
+        // Xóa khỏi captured pieces
+        if (this.capturedPieces[lastMove.playerId].length > 0) {
+          this.capturedPieces[lastMove.playerId].pop();
+        }
+      } else {
+        this.board[lastMove.to.row][lastMove.to.col] = 0;
+      }
+    }
+
+    // Xóa nước cờ khỏi lịch sử
+    this.moveHistory.pop();
+
+    // Cập nhật lastMove - nước cờ trước đó (nếu còn)
+    if (this.moveHistory.length > 0) {
+      const prevMove = this.moveHistory[this.moveHistory.length - 1];
+      this.lastMove = {
+        from: prevMove.from,
+        to: prevMove.to
+      };
+    } else {
+      this.lastMove = null;
+    }
+
+    // Đổi lại lượt chơi (undo = quay lại lượt trước)
+    this.currentPlayerIndex = (this.currentPlayerIndex - 1 + this.players.length) % this.players.length;
+
+    // Kiểm tra lại trạng thái game sau khi undo
+    this.checkGameStatus();
+
+    return {
+      success: true,
+      data: {
+        message: 'Đã quay lại nước cờ thành công'
       }
     };
   }

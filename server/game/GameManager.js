@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const TienLenGame = require('./games/TienLenGame');
-const PhomGame = require('./games/PhomGame');
+const SamLocGame = require('./games/SamLocGame');
 const CoVayGame = require('./games/CoVayGame');
 const CoVuaGame = require('./games/CoVuaGame');
 
@@ -18,11 +18,11 @@ class GameManager {
       status: 'waiting', // waiting, playing, finished
       players: [{ id: hostId, username: hostUsername }],
       // Tiến lên: min 2, max 4
-      // Phỏm: min 2, max 4
+      // Sâm lốc: min 2, max 4
       // Cờ vây: min 2, max 2
       // Cờ vua: min 2, max 2
-      minPlayers: (gameType === 'tienlen' || gameType === 'phom') ? 2 : 2,
-      maxPlayers: (gameType === 'tienlen' || gameType === 'phom') ? 4 : 2,
+      minPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 2 : 2,
+      maxPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 4 : 2,
       gameState: null,
       createdAt: new Date()
     };
@@ -36,6 +36,7 @@ class GameManager {
   }
 
   getRooms() {
+    // Chỉ hiển thị các phòng đang chờ (waiting) trong lobby
     return Array.from(this.rooms.values()).filter(room => room.status === 'waiting');
   }
 
@@ -75,16 +76,20 @@ class GameManager {
     const room = this.rooms.get(roomId);
     if (!room) return false;
 
-    if (room.status !== 'waiting') return false;
+    // Cho phép start lại từ trạng thái finished hoặc waiting
+    if (room.status !== 'waiting' && room.status !== 'finished') return false;
     if (room.players.length < room.minPlayers) return false;
 
+    // Reset game state trước khi bắt đầu ván mới
+    room.gameState = null;
+    room.winner = null;
     room.status = 'playing';
     
     // Initialize game based on type
     if (room.gameType === 'tienlen') {
       room.gameState = new TienLenGame(room.players);
-    } else if (room.gameType === 'phom') {
-      room.gameState = new PhomGame(room.players);
+    } else if (room.gameType === 'samloc') {
+      room.gameState = new SamLocGame(room.players);
     } else if (room.gameType === 'covay') {
       room.gameState = new CoVayGame(room.players);
     } else if (room.gameType === 'covua') {
@@ -136,6 +141,11 @@ class GameManager {
       maxPlayers: room.maxPlayers,
       createdAt: room.createdAt
     };
+
+    // Thêm winner nếu game đã kết thúc
+    if (room.status === 'finished' && room.winner) {
+      serialized.winner = room.winner;
+    }
 
     // Serialize game state for the specific player
     if (room.gameState && room.status === 'playing') {

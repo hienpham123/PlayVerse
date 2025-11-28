@@ -1,4 +1,4 @@
-class TienLenGame {
+class SamLocGame {
   constructor(players) {
     this.players = players;
     this.currentPlayerIndex = 0;
@@ -7,6 +7,7 @@ class TienLenGame {
     this.lastPlay = null;
     this.lastPlayerId = null;
     this.passes = 0;
+    this.gamePhase = 'playing';
     this.lastPassedPlayerId = null; // Người vừa bỏ lượt
     this.passChain = []; // Danh sách người đã bỏ lượt liên tiếp trong chuỗi hiện tại
     
@@ -14,7 +15,7 @@ class TienLenGame {
   }
 
   createDeck() {
-    const suits = ['spades', 'clubs', 'diamonds', 'hearts'];
+    const suits = ['spades', 'clubs', 'diamonds', 'hearts']; // Bích, Tép, Rô, Cơ
     const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
     const deck = [];
 
@@ -40,7 +41,7 @@ class TienLenGame {
     };
     
     const baseValue = rankValues[rank] || 0;
-    // Thứ tự ưu tiên: Hearts (mạnh nhất) > Diamonds > Clubs > Spades (yếu nhất)
+    // Thứ tự ưu tiên: Hearts (Cơ - mạnh nhất) > Diamonds (Rô) > Clubs (Tép) > Spades (Bích - yếu nhất)
     const suitValues = { 
       'hearts': 0.4,      // Cơ - mạnh nhất
       'diamonds': 0.3,    // Rô
@@ -51,11 +52,15 @@ class TienLenGame {
   }
 
   dealCards() {
-    // Deal 13 cards to each player
+    // Mỗi người chơi được chia 10 lá bài trong Sâm lốc
+    const cardsPerPlayer = 10;
     this.players.forEach((player, index) => {
-      this.hands[player.id] = this.deck.slice(index * 13, (index + 1) * 13)
-        .sort((a, b) => b.value - a.value);
+      this.hands[player.id] = this.deck.slice(index * cardsPerPlayer, (index + 1) * cardsPerPlayer)
+        .sort((a, b) => b.value - a.value); // Sắp xếp từ lớn đến nhỏ
     });
+
+    // Số bài còn lại không được chia
+    this.remainingCards = this.deck.slice(this.players.length * cardsPerPlayer);
   }
 
   getStateForPlayer(playerId) {
@@ -100,7 +105,7 @@ class TienLenGame {
 
     // Validate play
     if (!this.isValidPlay(cards, this.lastPlay)) {
-      return { success: false, error: 'Tổ hợp bài không hợp lệ' };
+      return { success: false, error: 'Tổ hợp bài không hợp lệ hoặc không thể chặt được' };
     }
 
     // Remove cards from hand
@@ -111,7 +116,7 @@ class TienLenGame {
     this.lastPlayerId = playerId;
     this.passes = 0;
     this.lastPassedPlayerId = null; // Reset khi có người đánh
-    this.passChain = []; // Reset chuỗi bỏ lượt
+    this.passChain = []; // Reset chuỗi bỏ lượt (khi đánh bài, reset hết)
 
     // Check win condition
     if (hand.length === 0) {
@@ -245,37 +250,95 @@ class TienLenGame {
     if (cards.length === 0) return false;
     if (cards.length === 1) return true; // Single card
     
-    // Check for pairs, triples, etc.
+    // Check for pairs, triples, four of a kind
     const ranks = cards.map(c => c.rank);
     const uniqueRanks = new Set(ranks);
     
-    if (cards.length === 2 && uniqueRanks.size === 1) return true; // Pair
-    if (cards.length === 3 && uniqueRanks.size === 1) return true; // Triple
-    if (cards.length === 4 && uniqueRanks.size === 1) return true; // Four of a kind
+    if (cards.length === 2 && uniqueRanks.size === 1) return true; // Đôi
+    if (cards.length === 3 && uniqueRanks.size === 1) return true; // Ba
+    if (cards.length === 4 && uniqueRanks.size === 1) return true; // Tứ quý
     
-    // Check for straight (simplified)
+    // Check for straight (sảnh) - từ 3 lá trở lên
     if (cards.length >= 3 && this.isStraight(cards)) return true;
     
     return false;
   }
 
   isStraight(cards) {
+    // Sảnh phải cùng chất và liên tiếp
+    if (cards.length < 3) return false;
+    
+    const suits = cards.map(c => c.suit);
+    const uniqueSuits = new Set(suits);
+    if (uniqueSuits.size !== 1) return false; // Phải cùng chất
+    
+    // Lấy giá trị cơ bản (không tính chất)
     const values = cards.map(c => Math.floor(c.value)).sort((a, b) => a - b);
+    
+    // Kiểm tra liên tiếp
     for (let i = 1; i < values.length; i++) {
       if (values[i] !== values[i-1] + 1) return false;
     }
+    
+    // Không được có lá 2 trong sảnh
+    if (values.includes(15)) return false;
+    
     return true;
   }
 
+  getPlayType(cards) {
+    if (cards.length === 1) return 'single';
+    if (cards.length === 2) return 'pair';
+    if (cards.length === 3) return 'triple';
+    if (cards.length === 4) {
+      const ranks = cards.map(c => c.rank);
+      const uniqueRanks = new Set(ranks);
+      return uniqueRanks.size === 1 ? 'four' : 'straight';
+    }
+    if (cards.length >= 3) {
+      return this.isStraight(cards) ? 'straight' : null;
+    }
+    return null;
+  }
+
   canBeat(cards, lastPlay) {
-    if (cards.length !== lastPlay.length) return false;
+    const playType = this.getPlayType(cards);
+    const lastPlayType = this.getPlayType(lastPlay);
     
-    const maxCard = Math.max(...cards.map(c => c.value));
-    const lastMaxCard = Math.max(...lastPlay.map(c => c.value));
+    // Phải cùng loại tổ hợp
+    if (playType !== lastPlayType) {
+      // Tứ quý có thể chặt bất kỳ tổ hợp nào
+      if (playType === 'four') return true;
+      return false;
+    }
     
-    return maxCard > lastMaxCard;
+    // Tứ quý không thể bị chặt bằng tổ hợp khác (trừ tứ quý lớn hơn)
+    if (lastPlayType === 'four' && playType !== 'four') return false;
+    
+    // So sánh giá trị
+    if (playType === 'single' || playType === 'pair' || playType === 'triple') {
+      const maxCard = Math.max(...cards.map(c => c.value));
+      const lastMaxCard = Math.max(...lastPlay.map(c => c.value));
+      return maxCard > lastMaxCard;
+    }
+    
+    // So sánh sảnh
+    if (playType === 'straight') {
+      if (cards.length !== lastPlay.length) return false;
+      const maxCard = Math.max(...cards.map(c => c.value));
+      const lastMaxCard = Math.max(...lastPlay.map(c => c.value));
+      return maxCard > lastMaxCard;
+    }
+    
+    // So sánh tứ quý
+    if (playType === 'four') {
+      const cardValue = Math.floor(cards[0].value);
+      const lastValue = Math.floor(lastPlay[0].value);
+      return cardValue > lastValue;
+    }
+    
+    return false;
   }
 }
 
-module.exports = TienLenGame;
-
+module.exports = SamLocGame;
