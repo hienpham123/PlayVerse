@@ -5,6 +5,7 @@ import TienLenGame from './games/TienLenGame';
 import SamLocGame from './games/SamLocGame';
 import CoVayGame from './games/CoVayGame';
 import CoVuaGame from './games/CoVuaGame';
+import XOGame from './games/XOGame';
 import './GameRoom.css';
 
 function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
@@ -123,7 +124,8 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       'tienlen': 'Tiến lên',
       'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
-      'covua': 'Cờ vua'
+      'covua': 'Cờ vua',
+      'xo': 'Cờ XO'
     };
     return names[type] || type;
   };
@@ -266,6 +268,22 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
 
           {room.gameType === 'covua' && gameState && gameState.board && (
             <CoVuaGame
+              user={user}
+              room={room}
+              gameState={gameState}
+              onAction={(action, data) => {
+                socket.emit('game-action', {
+                  roomId: room.id,
+                  userId: user.id,
+                  action,
+                  data
+                });
+              }}
+            />
+          )}
+
+          {room.gameType === 'xo' && gameState && (
+            <XOGame
               user={user}
               room={room}
               gameState={gameState}

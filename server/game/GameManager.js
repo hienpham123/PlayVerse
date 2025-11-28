@@ -3,6 +3,7 @@ const TienLenGame = require('./games/TienLenGame');
 const SamLocGame = require('./games/SamLocGame');
 const CoVayGame = require('./games/CoVayGame');
 const CoVuaGame = require('./games/CoVuaGame');
+const XOGame = require('./games/XOGame');
 
 class GameManager {
   constructor() {
@@ -21,6 +22,7 @@ class GameManager {
       // Sâm lốc: min 2, max 4
       // Cờ vây: min 2, max 2
       // Cờ vua: min 2, max 2
+      // XO: min 2, max 2
       minPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 2 : 2,
       maxPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 4 : 2,
       gameState: null,
@@ -94,6 +96,8 @@ class GameManager {
       room.gameState = new CoVayGame(room.players);
     } else if (room.gameType === 'covua') {
       room.gameState = new CoVuaGame(room.players);
+    } else if (room.gameType === 'xo') {
+      room.gameState = new XOGame(room.players);
     }
 
     return true;

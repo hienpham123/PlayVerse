@@ -72,7 +72,8 @@ function Lobby({ user, onLogout, onJoinRoom }) {
       'tienlen': 'Tiến lên',
       'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
-      'covua': 'Cờ vua'
+      'covua': 'Cờ vua',
+      'xo': 'Cờ XO'
     };
     return names[type] || type;
   };
@@ -103,6 +104,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
               <option value="samloc">Sâm lốc</option>
               <option value="covay">Cờ vây</option>
               <option value="covua">Cờ vua</option>
+              <option value="xo">Cờ XO</option>
             </select>
             <button className="btn btn-success" onClick={handleCreateRoom}>
               Tạo phòng

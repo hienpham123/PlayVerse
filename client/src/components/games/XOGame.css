@@ -1,0 +1,110 @@
+.xo-game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+.xo-status {
+  text-align: center;
+}
+
+.xo-status h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.xo-board {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 3px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.xo-row {
+  display: flex;
+  gap: 0;
+}
+
+.xo-cell {
+  width: 80px;
+  height: 80px;
+  border: 2px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: #f5f5f5;
+  transition: all 0.2s ease;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.xo-cell:hover:not(.filled) {
+  background-color: #e0e0e0;
+}
+
+.xo-cell.filled {
+  cursor: not-allowed;
+}
+
+.xo-cell.winning {
+  background-color: #4caf50;
+  animation: win-pulse 0.5s ease-in-out;
+}
+
+.xo-symbol {
+  user-select: none;
+}
+
+.xo-symbol.x {
+  color: #f44336;
+}
+
+.xo-symbol.o {
+  color: #2196f3;
+}
+
+.xo-game-over {
+  text-align: center;
+  padding: 15px;
+  background-color: #fff3cd;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+@keyframes win-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .xo-cell {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .xo-cell {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+}
+
