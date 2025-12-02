@@ -5,6 +5,7 @@ const CoVayGame = require('./games/CoVayGame');
 const CoVuaGame = require('./games/CoVuaGame');
 const CoTuongGame = require('./games/CoTuongGame');
 const XOGame = require('./games/XOGame');
+const TaiXiuGame = require('./games/TaiXiuGame');
 
 class GameManager {
   constructor() {
@@ -26,8 +27,9 @@ class GameManager {
       // Cờ vua: min 2, max 2
       // Cờ tướng: min 2, max 2
       // XO: min 2, max 2
-      minPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 2 : 2,
-      maxPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 4 : 2,
+      // Tài Xỉu: min 1, max 10
+      minPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 2 : (gameType === 'taixiu' ? 1 : 2),
+      maxPlayers: (gameType === 'tienlen' || gameType === 'samloc') ? 4 : (gameType === 'taixiu' ? 10 : 2),
       gameState: null,
       messages: [], // Lịch sử chat
       createdAt: new Date()
@@ -135,6 +137,8 @@ class GameManager {
       room.gameState = new CoTuongGame(room.players);
     } else if (room.gameType === 'xo') {
       room.gameState = new XOGame(room.players);
+    } else if (room.gameType === 'taixiu') {
+      room.gameState = new TaiXiuGame(room.players, room.hostId);
     }
 
     return true;
@@ -196,6 +200,10 @@ class GameManager {
     // Serialize game state for the specific player or spectator
     if (room.gameState && (room.status === 'playing' || room.status === 'finished')) {
       serialized.gameState = room.gameState.getStateForPlayer(playerId);
+      // Thêm hostId vào gameState để client biết ai là chủ phòng
+      if (room.gameType === 'taixiu') {
+        serialized.gameState.hostId = room.hostId;
+      }
     }
 
     return serialized;

@@ -7,6 +7,7 @@ import CoVayGame from './games/CoVayGame';
 import CoVuaGame from './games/CoVuaGame';
 import CoTuongGame from './games/CoTuongGame';
 import XOGame from './games/XOGame';
+import TaiXiuGame from './games/TaiXiuGame';
 import './GameRoom.css';
 
 function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
@@ -17,6 +18,9 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
   const [chatMessage, setChatMessage] = useState('');
   const [isSpectator, setIsSpectator] = useState(false);
   const messagesEndRef = useRef(null);
+  const chatMessagesRef = useRef(null);
+  const lastMessageCountRef = useRef(0);
+  const isUserScrollingRef = useRef(false); // Theo dõi xem user có đang scroll không
 
   useEffect(() => {
     // Kiểm tra xem người chơi đã có trong phòng chưa
@@ -170,10 +174,75 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
     }
   }, [room, user.id]);
 
+  // Helper function to check if user is near bottom of chat
+  const isNearBottom = () => {
+    if (!chatMessagesRef.current) return true;
+    const container = chatMessagesRef.current;
+    const threshold = 150; // pixels from bottom
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    return distanceFromBottom < threshold;
+  };
+
+  // Helper function to scroll to bottom
+  const scrollToBottom = (force = false) => {
+    if (!force && isUserScrollingRef.current) {
+      return; // Không scroll nếu user đang scroll
+    }
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 0);
+  };
+
+  // Theo dõi scroll để biết user có đang đọc tin nhắn cũ không
   useEffect(() => {
-    // Scroll to bottom when new message arrives
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const container = chatMessagesRef.current;
+    if (!container) return;
+
+    let scrollTimeout;
+    const handleScroll = () => {
+      // User đang scroll thủ công
+      isUserScrollingRef.current = true;
+      
+      // Clear timeout cũ
+      clearTimeout(scrollTimeout);
+      
+      // Sau 1 giây không scroll, reset flag
+      scrollTimeout = setTimeout(() => {
+        isUserScrollingRef.current = false;
+      }, 1000);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Kiểm tra xem có tin nhắn mới không
+    const hasNewMessage = messages.length > lastMessageCountRef.current;
+    
+    if (hasNewMessage) {
+      // Lấy tin nhắn mới nhất
+      const lastMessage = messages[messages.length - 1];
+      const isMyMessage = lastMessage && lastMessage.userId === user.id;
+      
+      // Chỉ scroll nếu:
+      // 1. Đó là tin nhắn của chính user (luôn muốn thấy tin nhắn mình vừa gửi)
+      // 2. HOẶC tin nhắn từ người khác VÀ user đang ở gần bottom VÀ không đang scroll
+      if (isMyMessage) {
+        // Tin nhắn của user, luôn scroll
+        scrollToBottom(true);
+      } else if (isNearBottom() && !isUserScrollingRef.current) {
+        // Tin nhắn từ người khác, chỉ scroll nếu đang ở gần bottom
+        scrollToBottom();
+      }
+    }
+    
+    // Update last message count
+    lastMessageCountRef.current = messages.length;
+  }, [messages, user.id]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -187,6 +256,8 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
     });
 
     setChatMessage('');
+    // Reset scroll flag để đảm bảo scroll khi tin nhắn đến
+    isUserScrollingRef.current = false;
   };
 
   const isPlayer = room?.players?.some(p => p.id === user.id);
@@ -219,7 +290,9 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
       'covua': 'Cờ vua',
-      'xo': 'Cờ XO'
+      'cotuong': 'Cờ tướng',
+      'xo': 'Cờ XO',
+      'taixiu': 'Tài Xỉu'
     };
     return names[type] || type;
   };
@@ -413,6 +486,22 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
               }}
             />
           )}
+
+          {room.gameType === 'taixiu' && gameState && (
+            <TaiXiuGame
+              user={user}
+              room={room}
+              gameState={gameState}
+              onAction={(action, data) => {
+                socket.emit('game-action', {
+                  roomId: room.id,
+                  userId: user.id,
+                  action,
+                  data
+                });
+              }}
+            />
+          )}
           </div>
 
           {/* Chat và danh sách khán giả */}
@@ -422,7 +511,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
               <div className="chat-header">
                 <h3>💬 Chat</h3>
               </div>
-              <div className="chat-messages">
+              <div className="chat-messages" ref={chatMessagesRef}>
                 {messages.map((msg) => (
                   <div key={msg.id} className={`chat-message ${msg.userId === user.id ? 'own-message' : ''}`}>
                     <div className="message-header">

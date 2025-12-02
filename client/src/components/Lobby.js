@@ -75,7 +75,8 @@ function Lobby({ user, onLogout, onJoinRoom }) {
       'covay': 'Cờ vây',
       'covua': 'Cờ vua',
       'cotuong': 'Cờ tướng',
-      'xo': 'Cờ XO'
+      'xo': 'Cờ XO',
+      'taixiu': 'Tài Xỉu'
     };
     return names[type] || type;
   };
@@ -108,6 +109,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
               <option value="covua">Cờ vua</option>
               <option value="cotuong">Cờ tướng</option>
               <option value="xo">Cờ XO</option>
+              <option value="taixiu">Tài Xỉu</option>
             </select>
             <button className="btn btn-success" onClick={handleCreateRoom}>
               Tạo phòng
@@ -140,9 +142,9 @@ function Lobby({ user, onLogout, onJoinRoom }) {
                               className="btn btn-primary"
                               style={{ width: '100%', marginTop: '10px' }}
                               onClick={() => handleJoinRoom(room)}
-                              disabled={room.players.length >= room.maxPlayers && !['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType)}
+                              disabled={room.players.length >= room.maxPlayers && !['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType)}
                             >
-                              {room.players.length >= room.maxPlayers && ['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType) 
+                              {room.players.length >= room.maxPlayers && ['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType) 
                                 ? 'Xem trận đấu' 
                                 : room.players.length >= room.maxPlayers 
                                   ? 'Phòng đầy' 
@@ -160,7 +162,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
                     <h2>Trận đấu đang diễn ra ({playingRooms.length})</h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
                       {playingRooms.map(room => {
-                        const canSpectate = ['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType);
+                        const canSpectate = ['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType);
                         const isPlayerInRoom = room.players.some(p => p.id === user.id);
                         const isSpectatorInRoom = room.spectators?.some(s => s.id === user.id);
                         const canJoin = canSpectate && !isPlayerInRoom && !isSpectatorInRoom;

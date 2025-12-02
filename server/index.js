@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     
     // Nếu phòng đang chơi và người này chưa có trong phòng, cho vào làm spectator
     if (room.status === 'playing' && !existingPlayer && !existingSpectator) {
-      const canSpectate = ['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType);
+      const canSpectate = ['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType);
       if (canSpectate) {
         socket.userId = userId;
         socket.join(roomId);
@@ -255,6 +255,30 @@ io.on('connection', (socket) => {
     const result = gameManager.handleGameAction(roomId, userId, action, data);
     if (result.success) {
       const updatedRoom = gameManager.getRoom(roomId);
+      
+      // Nếu là roll-dice hoặc new-round của taixiu, check auto roll
+      if (updatedRoom.gameType === 'taixiu' && updatedRoom.gameState) {
+        const autoRollResult = updatedRoom.gameState.checkAndAutoRoll();
+        if (autoRollResult && autoRollResult.success) {
+          // Auto roll đã được thực hiện, broadcast kết quả
+          const socketRoom = io.sockets.adapter.rooms.get(roomId);
+          if (socketRoom) {
+            socketRoom.forEach((socketId) => {
+              const playerSocket = io.sockets.sockets.get(socketId);
+              if (playerSocket) {
+                const playerId = playerSocket.userId || userId;
+                playerSocket.emit('game-update', {
+                  room: gameManager.serializeRoom(updatedRoom, playerId),
+                  action: 'roll-dice',
+                  data: autoRollResult.data
+                });
+              }
+            });
+          }
+          return;
+        }
+      }
+      
       // Send personalized game state to each player in the room
       const socketRoom = io.sockets.adapter.rooms.get(roomId);
       if (socketRoom) {
@@ -336,6 +360,54 @@ io.on('connection', (socket) => {
     io.emit('rooms-updated', { rooms: gameManager.getRooms() });
   });
 });
+
+// Interval để check và tự động roll xúc xắc cho taixiu khi hết thời gian, và tự động bắt đầu ván mới
+setInterval(() => {
+  const rooms = gameManager.getRooms();
+  rooms.forEach(room => {
+    if (room.gameType === 'taixiu' && room.gameState && room.status === 'playing') {
+      // Check tự động roll xúc xắc khi hết thời gian đặt cược
+      const autoRollResult = room.gameState.checkAndAutoRoll();
+      if (autoRollResult && autoRollResult.success) {
+        // Broadcast kết quả auto roll
+        const socketRoom = io.sockets.adapter.rooms.get(room.id);
+        if (socketRoom) {
+          socketRoom.forEach((socketId) => {
+            const playerSocket = io.sockets.sockets.get(socketId);
+            if (playerSocket) {
+              const playerId = playerSocket.userId;
+              playerSocket.emit('game-update', {
+                room: gameManager.serializeRoom(room, playerId),
+                action: 'roll-dice',
+                data: autoRollResult.data
+              });
+            }
+          });
+        }
+      }
+      
+      // Check tự động bắt đầu ván mới sau khi hiển thị kết quả
+      const autoNewRoundResult = room.gameState.checkAndAutoNewRound();
+      if (autoNewRoundResult && autoNewRoundResult.success) {
+        // Broadcast ván mới
+        const socketRoom = io.sockets.adapter.rooms.get(room.id);
+        if (socketRoom) {
+          socketRoom.forEach((socketId) => {
+            const playerSocket = io.sockets.sockets.get(socketId);
+            if (playerSocket) {
+              const playerId = playerSocket.userId;
+              playerSocket.emit('game-update', {
+                room: gameManager.serializeRoom(room, playerId),
+                action: 'new-round',
+                data: autoNewRoundResult.data
+              });
+            }
+          });
+        }
+      }
+    }
+  });
+}, 1000); // Check mỗi giây
 
 const PORT = process.env.PORT || 2023;
 server.listen(PORT, '0.0.0.0', () => {
