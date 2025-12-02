@@ -1,0 +1,218 @@
+.cotuong-board {
+  position: relative;
+  display: inline-block;
+  border: 3px solid #8B4513;
+  background-color: #F5DEB3;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cotuong-row {
+  display: flex;
+}
+
+.cotuong-cell {
+  width: 60px;
+  height: 60px;
+  border: 1px solid #8B4513;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #F5DEB3;
+  cursor: default;
+  box-sizing: border-box;
+}
+
+.cotuong-cell.palace {
+  background-color: #FFFACD;
+}
+
+.cotuong-cell.river {
+  border-top: 2px solid #4682B4;
+  border-bottom: 2px solid #4682B4;
+}
+
+.cotuong-cell.selected {
+  background-color: #FFD700 !important;
+  box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.8);
+}
+
+.cotuong-cell.valid-move {
+  position: relative;
+}
+
+.cotuong-cell.clickable {
+  cursor: pointer;
+}
+
+.cotuong-cell.clickable:hover {
+  background-color: #E0E0E0;
+}
+
+.cotuong-cell.last-move {
+  background-color: #FFA500 !important;
+  animation: lastMovePulse 0.5s ease-in-out;
+}
+
+@keyframes lastMovePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.valid-move-indicator {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.7;
+}
+
+/* Highlight quân cờ có thể bị bắt */
+.cotuong-cell.capturable {
+  background-color: #FF6B6B !important;
+  box-shadow: inset 0 0 15px rgba(255, 107, 107, 0.9), 0 0 10px rgba(255, 107, 107, 0.5);
+  animation: capturablePulse 1.2s ease-in-out infinite;
+  border: 2px solid #FF0000 !important;
+}
+
+@keyframes capturablePulse {
+  0%, 100% {
+    box-shadow: inset 0 0 15px rgba(255, 107, 107, 0.9), 0 0 10px rgba(255, 107, 107, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(255, 107, 107, 1), 0 0 15px rgba(255, 107, 107, 0.7);
+    transform: scale(1.02);
+  }
+}
+
+.cotuong-piece.capturable-piece {
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.9),
+    0 0 20px rgba(255, 107, 107, 0.9),
+    0 0 30px rgba(255, 107, 107, 0.7),
+    1px 1px 3px rgba(0, 0, 0, 0.5);
+  transform: scale(1.15);
+  transition: transform 0.2s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.cotuong-piece {
+  font-size: 36px;
+  font-weight: bold;
+  user-select: none;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  line-height: 1;
+}
+
+.cotuong-piece.red-piece {
+  color: #DC143C;
+}
+
+.cotuong-piece.black-piece {
+  color: #000000;
+}
+
+/* Sông */
+.river-line {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background-color: #4682B4;
+  z-index: 1;
+}
+
+.river-top {
+  top: 300px; /* Giữa hàng 4 và 5 */
+}
+
+.river-bottom {
+  top: 362px;
+}
+
+/* Cung - đường chéo */
+.palace-line {
+  position: absolute;
+  width: 2px;
+  background-color: #8B4513;
+  z-index: 1;
+}
+
+.palace-diagonal-1 {
+  top: 430px;
+  left: 190px;
+  height: 120px;
+  transform: rotate(45deg);
+  transform-origin: top left;
+}
+
+.palace-diagonal-2 {
+  top: 430px;
+  right: 190px;
+  height: 120px;
+  transform: rotate(-45deg);
+  transform-origin: top right;
+}
+
+.palace-black-1 {
+  top: 10px;
+  left: 190px;
+  height: 120px;
+  transform: rotate(-45deg);
+  transform-origin: top left;
+}
+
+.palace-black-2 {
+  top: 10px;
+  right: 190px;
+  height: 120px;
+  transform: rotate(45deg);
+  transform-origin: top right;
+}
+
+.cotuong-game-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cotuong-cell {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .cotuong-piece {
+    font-size: 24px;
+  }
+  
+  .cotuong-board {
+    padding: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cotuong-cell {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .cotuong-piece {
+    font-size: 18px;
+  }
+}
+

@@ -9,10 +9,31 @@ class XOGame {
     this.winner = null;
     this.winningLine = null; // Array of {row, col} positions for the winning line
     this.winLength = 5; // Cần 5 quân liên tiếp để thắng
+    this.lastMove = null; // Nước cờ vừa đi để highlight
   }
 
   getStateForPlayer(playerId) {
     const playerIndex = this.players.findIndex(p => p.id === playerId);
+    const isSpectator = playerIndex === -1;
+    
+    if (isSpectator) {
+      // Trả về state cho spectator (chỉ xem)
+      return {
+        board: this.board,
+        boardSize: this.boardSize,
+        currentPlayerId: this.players[this.currentPlayerIndex].id,
+        mySymbol: null,
+        opponentSymbol: null,
+        status: this.status,
+        winner: this.winner,
+        winningLine: this.winningLine,
+        isMyTurn: false,
+        lastMove: this.lastMove,
+        isSpectator: true,
+        moveHistory: this.moveHistory
+      };
+    }
+    
     const isCurrentPlayer = this.players[this.currentPlayerIndex].id === playerId;
     const mySymbol = playerIndex === 0 ? 'X' : 'O';
     const opponentSymbol = playerIndex === 0 ? 'O' : 'X';
@@ -26,7 +47,10 @@ class XOGame {
       status: this.status,
       winner: this.winner,
       winningLine: this.winningLine,
-      isMyTurn: isCurrentPlayer
+      isMyTurn: isCurrentPlayer,
+      lastMove: this.lastMove,
+      isSpectator: false,
+      moveHistory: this.moveHistory
     };
   }
 
@@ -38,6 +62,8 @@ class XOGame {
     switch (action) {
       case 'make-move':
         return this.makeMove(playerId, data.row, data.col);
+      case 'undo':
+        return this.undoMove(playerId);
       default:
         return { success: false, error: 'Hành động không hợp lệ' };
     }
@@ -63,7 +89,19 @@ class XOGame {
     this.board[row][col] = symbol;
     
     // Save move to history
-    this.moveHistory.push({ playerId, row, col, symbol });
+    const moveRecord = { 
+      playerId, 
+      row, 
+      col, 
+      symbol,
+      previousStatus: this.status,
+      previousWinner: this.winner,
+      previousWinningLine: this.winningLine ? [...this.winningLine] : null
+    };
+    this.moveHistory.push(moveRecord);
+
+    // Set lastMove để highlight
+    this.lastMove = { row, col };
 
     // Check for win or draw
     const result = this.checkGameStatus(row, col, symbol);
@@ -165,6 +203,55 @@ class XOGame {
 
   nextTurn() {
     this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+  }
+
+  undoMove(playerId) {
+    // Kiểm tra có nước cờ nào để undo không
+    if (this.moveHistory.length === 0) {
+      return { success: false, error: 'Không có nước cờ nào để quay lại' };
+    }
+
+    // Lấy nước cờ cuối cùng
+    const lastMoveRecord = this.moveHistory[this.moveHistory.length - 1];
+
+    // Chỉ cho phép undo nước cờ của chính người chơi đó
+    if (lastMoveRecord.playerId !== playerId) {
+      return { success: false, error: 'Bạn chỉ có thể quay lại nước cờ của chính mình' };
+    }
+
+    // Không được undo khi game đã kết thúc
+    if (this.status === 'finished') {
+      return { success: false, error: 'Không thể quay lại khi game đã kết thúc' };
+    }
+
+    // Khôi phục board - xóa quân cờ vừa đánh
+    this.board[lastMoveRecord.row][lastMoveRecord.col] = null;
+
+    // Khôi phục status, winner, winningLine
+    this.status = lastMoveRecord.previousStatus;
+    this.winner = lastMoveRecord.previousWinner;
+    this.winningLine = lastMoveRecord.previousWinningLine;
+
+    // Xóa nước cờ khỏi lịch sử
+    this.moveHistory.pop();
+
+    // Cập nhật lastMove - nước cờ trước đó (nếu còn)
+    if (this.moveHistory.length > 0) {
+      const prevMove = this.moveHistory[this.moveHistory.length - 1];
+      this.lastMove = { row: prevMove.row, col: prevMove.col };
+    } else {
+      this.lastMove = null;
+    }
+
+    // Đổi lại lượt chơi (undo = quay lại lượt trước)
+    this.currentPlayerIndex = (this.currentPlayerIndex - 1 + this.players.length) % this.players.length;
+
+    return {
+      success: true,
+      data: {
+        message: 'Đã quay lại nước cờ thành công'
+      }
+    };
   }
 }
 

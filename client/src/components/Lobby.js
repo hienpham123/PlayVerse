@@ -13,10 +13,11 @@ function Lobby({ user, onLogout, onJoinRoom }) {
 
     socket.on('room-created', ({ room }) => {
       setRooms(prev => {
-        // Kiểm tra xem phòng đã tồn tại chưa để tránh duplicate
+        // Kiểm tra xem phòng đã tồn tại chưa
         const exists = prev.find(r => r.id === room.id);
         if (exists) {
-          return prev;
+          // Cập nhật room nếu đã tồn tại (ví dụ khi status thay đổi)
+          return prev.map(r => r.id === room.id ? room : r);
         }
         return [...prev, room];
       });
@@ -73,6 +74,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
       'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
       'covua': 'Cờ vua',
+      'cotuong': 'Cờ tướng',
       'xo': 'Cờ XO'
     };
     return names[type] || type;
@@ -104,6 +106,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
               <option value="samloc">Sâm lốc</option>
               <option value="covay">Cờ vây</option>
               <option value="covua">Cờ vua</option>
+              <option value="cotuong">Cờ tướng</option>
               <option value="xo">Cờ XO</option>
             </select>
             <button className="btn btn-success" onClick={handleCreateRoom}>
@@ -113,32 +116,111 @@ function Lobby({ user, onLogout, onJoinRoom }) {
         </div>
 
         <div>
-          <h2>Phòng đang chờ ({rooms.length})</h2>
-          {loading ? (
-            <p>Đang tải...</p>
-          ) : rooms.length === 0 ? (
-            <p style={{ color: '#666', marginTop: '20px' }}>Chưa có phòng nào. Hãy tạo phòng mới!</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
-              {rooms.map(room => (
-                <div key={room.id} className="card">
-                  <h3>{getGameTypeName(room.gameType)}</h3>
-                  <p>Người chơi: {room.players.length}/{room.maxPlayers}</p>
-                  <p style={{ fontSize: '14px', color: '#666' }}>
-                    Chủ phòng: {room.players[0]?.username}
-                  </p>
-                  <button
-                    className="btn btn-primary"
-                    style={{ width: '100%', marginTop: '10px' }}
-                    onClick={() => handleJoinRoom(room)}
-                    disabled={room.players.length >= room.maxPlayers}
-                  >
-                    {room.players.length >= room.maxPlayers ? 'Phòng đầy' : 'Vào phòng'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          {(() => {
+            const waitingRooms = rooms.filter(r => r.status === 'waiting');
+            const playingRooms = rooms.filter(r => r.status === 'playing');
+            
+            return (
+              <>
+                {waitingRooms.length > 0 && (
+                  <div style={{ marginBottom: '30px' }}>
+                    <h2>Phòng đang chờ ({waitingRooms.length})</h2>
+                    {loading ? (
+                      <p>Đang tải...</p>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
+                        {waitingRooms.map(room => (
+                          <div key={room.id} className="card">
+                            <h3>{getGameTypeName(room.gameType)}</h3>
+                            <p>Người chơi: {room.players.length}/{room.maxPlayers}</p>
+                            <p style={{ fontSize: '14px', color: '#666' }}>
+                              Chủ phòng: {room.players[0]?.username}
+                            </p>
+                            <button
+                              className="btn btn-primary"
+                              style={{ width: '100%', marginTop: '10px' }}
+                              onClick={() => handleJoinRoom(room)}
+                              disabled={room.players.length >= room.maxPlayers && !['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType)}
+                            >
+                              {room.players.length >= room.maxPlayers && ['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType) 
+                                ? 'Xem trận đấu' 
+                                : room.players.length >= room.maxPlayers 
+                                  ? 'Phòng đầy' 
+                                  : 'Vào phòng'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {playingRooms.length > 0 && (
+                  <div>
+                    <h2>Trận đấu đang diễn ra ({playingRooms.length})</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
+                      {playingRooms.map(room => {
+                        const canSpectate = ['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType);
+                        const isPlayerInRoom = room.players.some(p => p.id === user.id);
+                        const isSpectatorInRoom = room.spectators?.some(s => s.id === user.id);
+                        const canJoin = canSpectate && !isPlayerInRoom && !isSpectatorInRoom;
+                        
+                        return (
+                          <div key={room.id} className="card" style={{ border: '2px solid #667eea' }}>
+                            <h3>{getGameTypeName(room.gameType)}</h3>
+                            <p style={{ 
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              color: 'white',
+                              padding: '8px',
+                              borderRadius: '6px',
+                              marginBottom: '10px',
+                              textAlign: 'center',
+                              fontWeight: 'bold'
+                            }}>
+                              🔴 Trận đấu đang diễn ra
+                            </p>
+                            <p>Người chơi: {room.players.map(p => p.username).join(' vs ')}</p>
+                            {room.spectators && room.spectators.length > 0 && (
+                              <p style={{ fontSize: '14px', color: '#666' }}>
+                                👁️ Khán giả: {room.spectators.length}
+                              </p>
+                            )}
+                            {canJoin && (
+                              <button
+                                className="btn btn-primary"
+                                style={{ width: '100%', marginTop: '10px' }}
+                                onClick={() => handleJoinRoom(room)}
+                              >
+                                👁️ Xem trận đấu
+                              </button>
+                            )}
+                            {(isPlayerInRoom || isSpectatorInRoom) && (
+                              <button
+                                className="btn btn-primary"
+                                style={{ width: '100%', marginTop: '10px' }}
+                                onClick={() => handleJoinRoom(room)}
+                              >
+                                {isPlayerInRoom ? 'Vào phòng' : 'Vào xem'}
+                              </button>
+                            )}
+                            {!canJoin && !isPlayerInRoom && !isSpectatorInRoom && (
+                              <p style={{ color: '#999', textAlign: 'center', marginTop: '10px' }}>
+                                Không thể tham gia
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {waitingRooms.length === 0 && playingRooms.length === 0 && !loading && (
+                  <p style={{ color: '#666', marginTop: '20px' }}>Chưa có phòng nào. Hãy tạo phòng mới!</p>
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>

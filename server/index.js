@@ -52,11 +52,48 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Kiểm tra xem người chơi đã có trong phòng chưa
+    // Kiểm tra xem người chơi đã có trong phòng chưa (player hoặc spectator)
     const existingPlayer = room.players.find(p => p.id === userId);
+    const existingSpectator = room.spectators?.find(s => s.id === userId);
     
-    // Nếu chưa có trong phòng, kiểm tra xem phòng còn chỗ không
-    if (!existingPlayer) {
+    // Nếu phòng đang chơi và người này chưa có trong phòng, cho vào làm spectator
+    if (room.status === 'playing' && !existingPlayer && !existingSpectator) {
+      const canSpectate = ['xo', 'covua', 'cotuong', 'covay'].includes(room.gameType);
+      if (canSpectate) {
+        socket.userId = userId;
+        socket.join(roomId);
+        const spectator = { id: userId, username, socketId: socket.id };
+        const addSpectatorResult = gameManager.addSpectatorToRoom(roomId, spectator);
+        
+        if (!addSpectatorResult) {
+          socket.emit('error', { message: 'Không thể thêm khán giả vào phòng' });
+          return;
+        }
+        
+        const updatedRoom = gameManager.getRoom(roomId);
+        const socketRoom = io.sockets.adapter.rooms.get(roomId);
+        if (socketRoom) {
+          socketRoom.forEach((socketId) => {
+            const playerSocket = io.sockets.sockets.get(socketId);
+            if (playerSocket) {
+              const playerId = playerSocket.userId || userId;
+              playerSocket.emit('room-updated', {
+                room: gameManager.serializeRoom(updatedRoom, playerId)
+              });
+            }
+          });
+        }
+        
+        socket.emit('joined-room', { room: gameManager.serializeRoom(updatedRoom, userId), isSpectator: true });
+        return;
+      } else {
+        socket.emit('error', { message: 'Trận đấu đang diễn ra, không thể tham gia' });
+        return;
+      }
+    }
+    
+    // Nếu chưa có trong phòng và phòng đang chờ, kiểm tra xem phòng còn chỗ không
+    if (!existingPlayer && !existingSpectator && room.status === 'waiting') {
       // Kiểm tra lại sau khi lấy room mới nhất để tránh race condition
       const currentRoom = gameManager.getRoom(roomId);
       if (!currentRoom) {
@@ -65,9 +102,42 @@ io.on('connection', (socket) => {
       }
       
       // Kiểm tra số lượng người chơi hiện tại so với maxPlayers
+      // Nếu đầy, cho phép join làm spectator (chỉ với game 2 người như XO, cờ vua, cờ tướng)
       if (currentRoom.players.length >= currentRoom.maxPlayers) {
-        socket.emit('error', { message: 'Phòng đã đầy' });
-        return;
+        const canSpectate = ['xo', 'covua', 'cotuong', 'covay'].includes(currentRoom.gameType);
+        if (canSpectate) {
+          // Cho phép join làm spectator
+          socket.userId = userId;
+          socket.join(roomId);
+          const spectator = { id: userId, username, socketId: socket.id };
+          const addSpectatorResult = gameManager.addSpectatorToRoom(roomId, spectator);
+          
+          if (!addSpectatorResult) {
+            socket.emit('error', { message: 'Không thể thêm khán giả vào phòng' });
+            return;
+          }
+          
+          const updatedRoom = gameManager.getRoom(roomId);
+          // Notify all players in room
+          const socketRoom = io.sockets.adapter.rooms.get(roomId);
+          if (socketRoom) {
+            socketRoom.forEach((socketId) => {
+              const playerSocket = io.sockets.sockets.get(socketId);
+              if (playerSocket) {
+                const playerId = playerSocket.userId || userId;
+                playerSocket.emit('room-updated', {
+                  room: gameManager.serializeRoom(updatedRoom, playerId)
+                });
+              }
+            });
+          }
+          
+          socket.emit('joined-room', { room: gameManager.serializeRoom(updatedRoom, userId), isSpectator: true });
+          return;
+        } else {
+          socket.emit('error', { message: 'Phòng đã đầy' });
+          return;
+        }
       }
     }
 
@@ -176,6 +246,9 @@ io.on('connection', (socket) => {
         }
       });
     }
+    
+    // Emit rooms-updated để tất cả clients biết phòng đã chuyển sang playing
+    io.emit('rooms-updated', { rooms: gameManager.getRooms() });
   });
 
   socket.on('game-action', ({ roomId, userId, action, data }) => {
@@ -199,6 +272,61 @@ io.on('connection', (socket) => {
       }
     } else {
       socket.emit('error', { message: result.error });
+    }
+  });
+
+  socket.on('chat-message', ({ roomId, userId, username, message }) => {
+    const room = gameManager.getRoom(roomId);
+    if (!room) {
+      socket.emit('error', { message: 'Không tìm thấy phòng' });
+      return;
+    }
+
+    // Kiểm tra xem user có trong room không (player hoặc spectator)
+    const isPlayer = room.players.some(p => p.id === userId);
+    const isSpectator = room.spectators?.some(s => s.id === userId);
+    
+    if (!isPlayer && !isSpectator) {
+      socket.emit('error', { message: 'Bạn không có trong phòng này' });
+      return;
+    }
+
+    // Lưu tin nhắn
+    if (!room.messages) {
+      room.messages = [];
+    }
+    
+    const chatMessage = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      userId,
+      username,
+      message: message.trim(),
+      timestamp: new Date().toISOString(),
+      isPlayer,
+      isSpectator
+    };
+    
+    room.messages.push(chatMessage);
+    
+    // Giới hạn số lượng tin nhắn (giữ 100 tin nhắn gần nhất)
+    if (room.messages.length > 100) {
+      room.messages = room.messages.slice(-100);
+    }
+
+    // Gửi tin nhắn đến tất cả mọi người trong room
+    const socketRoom = io.sockets.adapter.rooms.get(roomId);
+    if (socketRoom) {
+      socketRoom.forEach((socketId) => {
+        const playerSocket = io.sockets.sockets.get(socketId);
+        if (playerSocket) {
+          // Emit cả chat-message event riêng và room-updated để đảm bảo messages được sync
+          playerSocket.emit('chat-message', chatMessage);
+          const playerId = playerSocket.userId || userId;
+          playerSocket.emit('room-updated', {
+            room: gameManager.serializeRoom(room, playerId)
+          });
+        }
+      });
     }
   });
 

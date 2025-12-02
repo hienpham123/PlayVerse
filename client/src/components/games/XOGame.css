@@ -43,6 +43,10 @@
   font-weight: bold;
 }
 
+.xo-cell.spectator {
+  cursor: default;
+}
+
 .xo-cell:hover:not(.filled) {
   background-color: #e0e0e0;
 }
@@ -54,6 +58,21 @@
 .xo-cell.winning {
   background-color: #4caf50;
   animation: win-pulse 0.5s ease-in-out;
+}
+
+.xo-cell.last-move {
+  background-color: #FFD700 !important;
+  box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.8);
+  animation: lastMovePulse 0.5s ease-in-out;
+}
+
+@keyframes lastMovePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .xo-symbol {

@@ -265,23 +265,23 @@ class SamLocGame {
   }
 
   isStraight(cards) {
-    // Sảnh phải cùng chất và liên tiếp
+    // Sảnh chỉ cần liên tiếp, không cần cùng chất
     if (cards.length < 3) return false;
     
-    const suits = cards.map(c => c.suit);
-    const uniqueSuits = new Set(suits);
-    if (uniqueSuits.size !== 1) return false; // Phải cùng chất
+    // Lấy giá trị cơ bản (không tính chất) và loại bỏ trùng
+    const values = cards.map(c => Math.floor(c.value));
+    const uniqueValues = [...new Set(values)].sort((a, b) => a - b);
     
-    // Lấy giá trị cơ bản (không tính chất)
-    const values = cards.map(c => Math.floor(c.value)).sort((a, b) => a - b);
+    // Phải có đúng số lượng lá (không được trùng giá trị)
+    if (uniqueValues.length !== cards.length) return false;
     
     // Kiểm tra liên tiếp
-    for (let i = 1; i < values.length; i++) {
-      if (values[i] !== values[i-1] + 1) return false;
+    for (let i = 1; i < uniqueValues.length; i++) {
+      if (uniqueValues[i] !== uniqueValues[i-1] + 1) return false;
     }
     
     // Không được có lá 2 trong sảnh
-    if (values.includes(15)) return false;
+    if (uniqueValues.includes(15)) return false;
     
     return true;
   }
@@ -325,9 +325,18 @@ class SamLocGame {
     // So sánh sảnh
     if (playType === 'straight') {
       if (cards.length !== lastPlay.length) return false;
-      const maxCard = Math.max(...cards.map(c => c.value));
-      const lastMaxCard = Math.max(...lastPlay.map(c => c.value));
-      return maxCard > lastMaxCard;
+      // So sánh giá trị cơ bản (không tính chất) của lá lớn nhất
+      const maxBaseValue = Math.max(...cards.map(c => Math.floor(c.value)));
+      const lastMaxBaseValue = Math.max(...lastPlay.map(c => Math.floor(c.value)));
+      
+      // Nếu giá trị cơ bản bằng nhau, so sánh chất của lá lớn nhất
+      if (maxBaseValue === lastMaxBaseValue) {
+        const maxCard = cards.find(c => Math.floor(c.value) === maxBaseValue);
+        const lastMaxCard = lastPlay.find(c => Math.floor(c.value) === lastMaxBaseValue);
+        return maxCard.value > lastMaxCard.value;
+      }
+      
+      return maxBaseValue > lastMaxBaseValue;
     }
     
     // So sánh tứ quý
