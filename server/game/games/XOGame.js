@@ -2,13 +2,13 @@ class XOGame {
   constructor(players) {
     this.players = players;
     this.currentPlayerIndex = 0; // 0 = X, 1 = O
-    this.boardSize = 5; // 5x5 board
+    this.boardSize = 15; // 15x15 board
     this.board = Array(this.boardSize).fill(null).map(() => Array(this.boardSize).fill(null));
     this.moveHistory = [];
     this.status = 'playing'; // playing, finished
     this.winner = null;
     this.winningLine = null; // Array of {row, col} positions for the winning line
-    this.winLength = 3; // Cần 3 quân liên tiếp để thắng
+    this.winLength = 5; // Cần 5 quân liên tiếp để thắng
   }
 
   getStateForPlayer(playerId) {

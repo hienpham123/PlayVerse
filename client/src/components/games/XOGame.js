@@ -4,7 +4,7 @@ import './XOGame.css';
 
 function XOGame({ user, room, gameState, onAction }) {
   const isMyTurn = gameState && gameState.isMyTurn;
-  const boardSize = gameState?.boardSize || 5;
+  const boardSize = gameState?.boardSize || 15;
   const board = gameState?.board || Array(boardSize).fill(null).map(() => Array(boardSize).fill(null));
   const mySymbol = gameState?.mySymbol || 'X';
   const winner = gameState?.winner;
@@ -66,12 +66,10 @@ function XOGame({ user, room, gameState, onAction }) {
         <h3>{getStatusMessage()}</h3>
       </div>
 
-      <div className="xo-board">
-        {board.map((row, rowIndex) => (
-          <div key={rowIndex} className="xo-row">
-            {row.map((cell, colIndex) => renderCell(rowIndex, colIndex))}
-          </div>
-        ))}
+      <div className="xo-board" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)` }}>
+        {board.map((row, rowIndex) =>
+          row.map((cell, colIndex) => renderCell(rowIndex, colIndex))
+        )}
       </div>
 
       {gameState?.status === 'finished' && (
