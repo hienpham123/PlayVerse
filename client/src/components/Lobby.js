@@ -96,25 +96,77 @@ function Lobby({ user, onLogout, onJoinRoom }) {
 
         <div className="card" style={{ marginBottom: '20px' }}>
           <h2>Tạo phòng mới</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px' }}>
-            <select
-              className="input"
-              value={gameType}
-              onChange={(e) => setGameType(e.target.value)}
-              style={{ width: 'auto', margin: 0 }}
-            >
-              <option value="tienlen">Tiến lên</option>
-              <option value="samloc">Sâm lốc</option>
-              <option value="covay">Cờ vây</option>
-              <option value="covua">Cờ vua</option>
-              <option value="cotuong">Cờ tướng</option>
-              <option value="xo">Cờ XO</option>
-              <option value="taixiu">Tài Xỉu</option>
-            </select>
-            <button className="btn btn-success" onClick={handleCreateRoom}>
-              Tạo phòng
-            </button>
+          <p style={{ color: '#666', marginBottom: '20px' }}>Chọn loại game bạn muốn chơi:</p>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+            gap: '15px', 
+            marginBottom: '25px' 
+          }}>
+            {[
+              { value: 'tienlen', name: 'Tiến lên', icon: '🂮' },
+              { value: 'samloc', name: 'Sâm lốc', icon: '🎴' },
+              { value: 'covay', name: 'Cờ vây', icon: '⚫' },
+              { value: 'covua', name: 'Cờ vua', icon: '♔' },
+              { value: 'cotuong', name: 'Cờ tướng', icon: '將' },
+              { value: 'xo', name: 'Cờ XO', icon: '⭕' },
+              { value: 'taixiu', name: 'Tài Xỉu', icon: '🎲' }
+            ].map(game => (
+              <button
+                key={game.value}
+                onClick={() => setGameType(game.value)}
+                style={{
+                  padding: '20px 15px',
+                  border: `3px solid ${gameType === game.value ? '#667eea' : '#e0e0e0'}`,
+                  borderRadius: '12px',
+                  background: gameType === game.value 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+                    : 'white',
+                  color: gameType === game.value ? 'white' : '#333',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  boxShadow: gameType === game.value 
+                    ? '0 4px 15px rgba(102, 126, 234, 0.4)' 
+                    : '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  if (gameType !== game.value) {
+                    e.target.style.transform = 'translateY(-3px)';
+                    e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (gameType !== game.value) {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                  }
+                }}
+              >
+                <span style={{ fontSize: '32px' }}>{game.icon}</span>
+                <span>{game.name}</span>
+              </button>
+            ))}
           </div>
+
+          <button 
+            className="btn btn-success" 
+            onClick={handleCreateRoom}
+            style={{ 
+              width: '100%', 
+              padding: '15px',
+              fontSize: '18px',
+              fontWeight: '600'
+            }}
+          >
+            🎮 Tạo phòng {getGameTypeName(gameType)}
+          </button>
         </div>
 
         <div>

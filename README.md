@@ -1,6 +1,6 @@
-# 🎮 Game Bài Online
+# 🎮 Game Online
 
-Game bài online với ReactJS và Node.js, hỗ trợ nhiều người chơi qua mạng nội bộ. Bao gồm các game: **Tiến lên** và **Phỏm**.
+Game Online với ReactJS và Node.js, hỗ trợ nhiều người chơi qua mạng nội bộ. Bao gồm các game: **Tiến lên** và **Phỏm**.
 
 ## ✨ Tính năng
 

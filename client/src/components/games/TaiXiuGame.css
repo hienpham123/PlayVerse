@@ -335,45 +335,67 @@
 
 /* Dice Area */
 .dice-area {
-  background: white;
-  padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
   margin-bottom: 30px;
   text-align: center;
+  border: 2px solid #e9ecef;
 }
 
 .dice-container {
   display: flex;
   justify-content: center;
-  gap: 30px;
-  margin-bottom: 30px;
+  align-items: flex-end;
+  gap: 35px;
+  margin-bottom: 40px;
   position: relative;
+  min-height: 220px;
+  padding: 30px 20px;
 }
 
 .dice-wrapper {
   position: relative;
-  width: 120px;
-  height: 150px;
+  width: 140px;
+  height: 180px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
+  margin: 0 auto;
+}
+
+.dice-placeholder {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  visibility: hidden;
 }
 
 .dice-under-bowl {
   width: 100px;
   height: 100px;
-  background: white;
-  border: 4px solid #ddd;
-  border-radius: 15px;
+  background: #ffffff;
+  border: 3px solid #e0e0e0;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.5s;
-  position: relative;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
-  margin: 0 auto;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .dice-under-bowl.revealed {
@@ -424,6 +446,76 @@
   gap: 5px;
 }
 
+.dice-face-real {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 6px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.dice-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #000000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.dice-dot.center {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+}
+
+.dice-dot.top-left {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: center;
+  align-self: center;
+}
+
+.dice-dot.top-right {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: center;
+  align-self: center;
+}
+
+.dice-dot.middle-left {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+}
+
+.dice-dot.middle-right {
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+}
+
+.dice-dot.bottom-left {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: center;
+  align-self: center;
+}
+
+.dice-dot.bottom-right {
+  grid-column: 3;
+  grid-row: 3;
+  justify-self: center;
+  align-self: center;
+}
+
 .dice-number {
   font-size: 48px;
   line-height: 1;
@@ -452,7 +544,7 @@
 /* Bowl styles */
 .bowl {
   position: absolute;
-  bottom: 0;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   width: 120px;
@@ -491,7 +583,7 @@
 }
 
 .bowl-top {
-  font-size: 95px;
+  font-size: 105px;
   line-height: 1;
   text-align: center;
   filter: 
@@ -507,6 +599,7 @@
   z-index: 3;
   animation: bowlTopFloat 2s ease-in-out infinite;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: -10px;
 }
 
 @keyframes bowlTopFloat {
@@ -528,8 +621,8 @@
 }
 
 .bowl-body {
-  width: 110px;
-  height: 70px;
+  width: 108px;
+  height: 68px;
   background: 
     radial-gradient(ellipse at top, rgba(240, 230, 220, 0.6) 0%, transparent 50%),
     linear-gradient(180deg, 
@@ -541,7 +634,7 @@
       rgba(70, 60, 45, 1) 100%
     );
   border-radius: 0 0 55% 55% / 0 0 45% 45%;
-  margin: -15px auto 0;
+  margin: -10px auto 0;
   box-shadow: 
     inset 0 -20px 40px rgba(0, 0, 0, 0.6),
     inset 0 8px 20px rgba(255, 255, 255, 0.2),
@@ -669,49 +762,44 @@
 }
 
 .result-display {
-  margin-top: 20px;
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
-.sum-display h3 {
-  margin: 0 0 15px 0;
-  font-size: 24px;
-}
-
-.sum-value {
-  font-size: 36px;
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: 10px;
-  display: inline-block;
-}
-
-.sum-value.tai {
-  background: #d4edda;
-  color: #155724;
-}
-
-.sum-value.xiu {
-  background: #f8d7da;
-  color: #721c24;
+.result-card {
+  background: white;
+  padding: 20px 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .result-badge {
   display: inline-block;
-  padding: 15px 30px;
+  padding: 12px 35px;
   border-radius: 10px;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  margin-top: 15px;
+  border: 3px solid;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .result-badge.tai {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
+  background: white;
+  color: #155724;
+  border-color: #28a745;
 }
 
 .result-badge.xiu {
-  background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-  color: white;
+  background: white;
+  color: #721c24;
+  border-color: #dc3545;
 }
 
 /* Players Bets */
@@ -872,7 +960,30 @@
 }
 
 .history-dice {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-dice-item {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background: #ffffff;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.history-dice-item .dice-face-real {
+  padding: 4px;
+  gap: 2px;
+}
+
+.history-dice-item .dice-dot {
+  width: 4px;
+  height: 4px;
 }
 
 .history-sum {
@@ -902,15 +1013,51 @@
 
   .dice-container {
     gap: 15px;
+    padding: 20px 10px;
   }
 
-  .dice {
+  .dice-wrapper {
+    width: 100px;
+    height: 140px;
+  }
+
+  .dice-under-bowl {
     width: 80px;
     height: 80px;
   }
 
-  .dice-number {
-    font-size: 36px;
+  .dice-face-real {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .dice-dot {
+    width: 12px;
+    height: 12px;
+  }
+
+  .bowl {
+    width: 90px;
+    height: 110px;
+  }
+
+  .bowl-top {
+    font-size: 80px;
+  }
+
+  .bowl-body {
+    width: 85px;
+    height: 55px;
+  }
+
+  .history-dice-item {
+    width: 28px;
+    height: 28px;
+  }
+
+  .history-dice-item .dice-dot {
+    width: 3px;
+    height: 3px;
   }
 }
 

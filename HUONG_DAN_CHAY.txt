@@ -1,5 +1,5 @@
 ========================================
-   HƯỚNG DẪN CHẠY GAME BÀI ONLINE
+   HƯỚNG DẪN CHẠY Game Online
 ========================================
 
 CÁCH 1: Chạy bằng script tự động (Dễ nhất)

@@ -2,6 +2,45 @@ import React, { useState, useEffect } from 'react';
 import '../../App.css';
 import './TaiXiuGame.css';
 
+// Component để vẽ xúc xắc với các chấm đen
+function DiceFace({ value }) {
+  if (!value || value < 1 || value > 6) return null;
+  
+  const dots = [];
+  
+  // Tạo các chấm dựa trên giá trị
+  if (value === 1) {
+    dots.push(<div key="center" className="dice-dot center"></div>);
+  } else if (value === 2) {
+    dots.push(<div key="top-left" className="dice-dot top-left"></div>);
+    dots.push(<div key="bottom-right" className="dice-dot bottom-right"></div>);
+  } else if (value === 3) {
+    dots.push(<div key="top-left" className="dice-dot top-left"></div>);
+    dots.push(<div key="center" className="dice-dot center"></div>);
+    dots.push(<div key="bottom-right" className="dice-dot bottom-right"></div>);
+  } else if (value === 4) {
+    dots.push(<div key="top-left" className="dice-dot top-left"></div>);
+    dots.push(<div key="top-right" className="dice-dot top-right"></div>);
+    dots.push(<div key="bottom-left" className="dice-dot bottom-left"></div>);
+    dots.push(<div key="bottom-right" className="dice-dot bottom-right"></div>);
+  } else if (value === 5) {
+    dots.push(<div key="top-left" className="dice-dot top-left"></div>);
+    dots.push(<div key="top-right" className="dice-dot top-right"></div>);
+    dots.push(<div key="center" className="dice-dot center"></div>);
+    dots.push(<div key="bottom-left" className="dice-dot bottom-left"></div>);
+    dots.push(<div key="bottom-right" className="dice-dot bottom-right"></div>);
+  } else if (value === 6) {
+    dots.push(<div key="top-left" className="dice-dot top-left"></div>);
+    dots.push(<div key="top-right" className="dice-dot top-right"></div>);
+    dots.push(<div key="middle-left" className="dice-dot middle-left"></div>);
+    dots.push(<div key="middle-right" className="dice-dot middle-right"></div>);
+    dots.push(<div key="bottom-left" className="dice-dot bottom-left"></div>);
+    dots.push(<div key="bottom-right" className="dice-dot bottom-right"></div>);
+  }
+  
+  return <div className="dice-face-real">{dots}</div>;
+}
+
 function TaiXiuGame({ user, room, gameState, onAction }) {
   const [betAmount, setBetAmount] = useState(100);
   const [selectedChoice, setSelectedChoice] = useState(null);
@@ -93,11 +132,7 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
     onAction('place-bet', { choice, amount: betAmount });
   };
 
-  const getDiceEmoji = (value) => {
-    if (!value) return '⚪';
-    const diceFaces = ['⚪', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-    return diceFaces[value] || '⚪';
-  };
+  // Không cần getDiceEmoji nữa, sử dụng DiceFace component
 
   const isWinner = (playerId) => {
     return winners.some(w => w.playerId === playerId);
@@ -243,36 +278,35 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
                 {/* Xúc xắc bên dưới - chỉ hiển thị khi đã reveal hoặc đang rolling */}
                 {(status === 'rolling' || localRevealedDice[index]) && (
                   <div className={`dice-under-bowl ${localRevealedDice[index] ? 'revealed' : ''} ${status === 'rolling' ? 'loading' : ''}`}>
-                    <div className="dice-face">
-                      {value ? (
-                        <>
-                          <span className="dice-number">{getDiceEmoji(value)}</span>
-                          <span className="dice-value">{value}</span>
-                        </>
-                      ) : (
-                        <span className="dice-loading">🎲</span>
-                      )}
-                    </div>
+                    {value ? (
+                      <DiceFace value={value} />
+                    ) : (
+                      <div className="dice-loading">🎲</div>
+                    )}
                   </div>
                 )}
                 
                 {/* Bát che phía trên - chỉ hiển thị khi finished và chưa reveal */}
                 {status === 'finished' && !localRevealedDice[index] && (
-                  <div
-                    className={`bowl ${draggingIndex === index ? 'dragging' : ''}`}
-                    onMouseDown={(e) => handleMouseDown(e, index)}
-                    style={{
-                      cursor: draggingIndex === index ? 'grabbing' : 'grab',
-                      transform: draggingIndex === index 
-                        ? `translateX(-50%) translateY(-${Math.min(150, currentDragY)}px)` 
-                        : 'translateX(-50%) translateY(0px)',
-                      transition: draggingIndex === index ? 'none' : 'transform 0.3s ease'
-                    }}
-                  >
-                    <div className="bowl-top">🍵</div>
-                    <div className="bowl-body"></div>
-                    <div className="drag-hint">⬆️ Kéo lên để xem</div>
-                  </div>
+                  <>
+                    {/* Placeholder để giữ không gian cho xúc xắc bên dưới */}
+                    <div className="dice-placeholder"></div>
+                    <div
+                      className={`bowl ${draggingIndex === index ? 'dragging' : ''}`}
+                      onMouseDown={(e) => handleMouseDown(e, index)}
+                      style={{
+                        cursor: draggingIndex === index ? 'grabbing' : 'grab',
+                        transform: draggingIndex === index 
+                          ? `translateX(-50%) translateY(-${Math.min(150, currentDragY)}px)` 
+                          : 'translateX(-50%) translateY(0px)',
+                        transition: draggingIndex === index ? 'none' : 'transform 0.3s ease'
+                      }}
+                    >
+                      <div className="bowl-top">🍵</div>
+                      <div className="bowl-body"></div>
+                      <div className="drag-hint">⬆️ Kéo lên để xem</div>
+                    </div>
+                  </>
                 )}
               </div>
             ))}
@@ -280,10 +314,9 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
           
           {status === 'finished' && allDiceRevealed && (
             <div className="result-display">
-              <div className="sum-display">
-                <h3>Tổng điểm: <span className={`sum-value ${result === 'tai' ? 'tai' : 'xiu'}`}>{sum}</span></h3>
+              <div className="result-card">
                 <div className={`result-badge ${result === 'tai' ? 'tai' : 'xiu'}`}>
-                  {result === 'tai' ? '📈 TÀI' : '📉 XỈU'}
+                  {result === 'tai' ? '📈 Tài' : '📉 Xỉu'} - {sum} điểm
                 </div>
               </div>
             </div>
@@ -356,7 +389,11 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
               <div key={index} className="history-item">
                 <span className="history-round">Ván {round.round}</span>
                 <span className="history-dice">
-                  {round.dice.map(d => getDiceEmoji(d)).join(' ')}
+                  {round.dice.map((d, idx) => (
+                    <span key={idx} className="history-dice-item">
+                      <DiceFace value={d} />
+                    </span>
+                  ))}
                 </span>
                 <span className="history-sum">{round.sum}</span>
                 <span className={`history-result ${round.result}`}>

@@ -1,4 +1,4 @@
-# Hướng dẫn Setup Game Bài Online
+# Hướng dẫn Setup Game Online
 
 ## Bước 1: Cài đặt Dependencies
 

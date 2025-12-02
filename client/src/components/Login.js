@@ -31,7 +31,7 @@ function Login({ onLogin }) {
     <div className="App">
       <div className="container" style={{ maxWidth: '400px' }}>
         <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#667eea' }}>
-          🎮 Game Bài Online
+          🎮 Game Online
         </h1>
         <form onSubmit={handleSubmit}>
           <input
