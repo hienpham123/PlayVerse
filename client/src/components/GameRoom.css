@@ -4,6 +4,18 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+@media (max-width: 768px) {
+  .game-room {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-room {
+    padding: 5px;
+  }
+}
+
 .game-header {
   background: white;
   border-radius: 12px;
@@ -43,6 +55,7 @@
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .players-info {
@@ -161,13 +174,11 @@
 }
 
 .chess-board-wrapper {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  align-items: start;
   gap: 20px;
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
   position: relative;
 }
 
@@ -176,19 +187,21 @@
   flex-direction: column;
   align-items: center;
   min-width: 100px;
+  width: 120px;
   padding: 15px 10px;
   background: #f8f9fa;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   max-height: 450px;
+  flex-shrink: 0;
 }
 
 .captured-pieces-left {
-  order: 1;
+  grid-column: 1;
 }
 
 .captured-pieces-right {
-  order: 3;
+  grid-column: 3;
 }
 
 .captured-pieces-title {
@@ -239,59 +252,120 @@
 
 /* Đảm bảo bàn cờ ở giữa */
 .chess-board-container {
-  order: 2;
-  flex-shrink: 0;
+  grid-column: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .chess-board-wrapper {
+    grid-template-columns: 100px 1fr 100px;
+    gap: 10px;
+  }
+
+  .captured-pieces-side {
+    width: 100px;
+    min-width: 80px;
+    padding: 10px 5px;
+    font-size: 12px;
+  }
+
+  .captured-piece {
+    font-size: 22px;
+  }
 }
 
 @media (max-width: 768px) {
   .chess-board-wrapper {
+    display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
   }
 
   .captured-pieces-side {
     width: 100%;
-    max-width: 500px;
-    min-height: 80px;
+    max-width: 100%;
+    min-height: auto;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
-    padding: 10px;
+    justify-content: flex-start;
+    padding: 8px;
+    max-height: 80px;
+    margin: 0;
   }
 
   .captured-pieces-left {
+    grid-column: auto;
     order: 1;
   }
 
   .captured-pieces-right {
+    grid-column: auto;
     order: 3;
   }
 
   .chess-board-container {
+    grid-column: auto;
     order: 2;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
   }
 
   .captured-pieces-list {
     flex-direction: row;
-    gap: 5px;
+    gap: 6px;
     max-height: 60px;
     overflow-x: auto;
     overflow-y: hidden;
+    width: 100%;
+    padding: 0;
   }
 
   .captured-pieces-title {
-    margin-right: 10px;
+    margin-right: 8px;
     margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 11px;
   }
 
   .captured-piece {
-    font-size: 24px;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chess-board-wrapper {
+    gap: 8px;
+  }
+
+  .captured-pieces-side {
+    padding: 6px;
+    max-height: 70px;
+  }
+
+  .captured-pieces-title {
+    font-size: 10px;
+    margin-right: 6px;
+  }
+
+  .captured-piece {
+    font-size: 18px;
+  }
+
+  .captured-pieces-list {
+    gap: 4px;
+    max-height: 50px;
   }
 }
 
 .game-status {
   width: 100%;
-  max-width: 600px;
   background: #f8f9fa;
   padding: 20px;
   border-radius: 10px;
@@ -377,10 +451,12 @@
   display: flex;
   gap: 20px;
   align-items: flex-start;
+  width: 100%;
 }
 
 .game-board-with-chat > .game-board {
   flex: 1;
+  width: 100%;
 }
 
 /* Chat sidebar */

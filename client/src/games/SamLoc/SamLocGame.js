@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Card from '../Card';
+import Card from '../../components/Card';
 import '../../App.css';
-import '../GameRoom.css';
+import '../../components/GameRoom.css';
 
 function SamLocGame({ user, room, gameState, onAction }) {
   const [selectedCards, setSelectedCards] = useState([]);

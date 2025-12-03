@@ -1,7 +1,7 @@
 import React from 'react';
-import CoVayBoard from '../CoVayBoard';
+import CoVayBoard from '../../components/CoVayBoard';
 import '../../App.css';
-import '../GameRoom.css';
+import '../../components/GameRoom.css';
 
 function CoVayGame({ user, room, gameState, onAction }) {
   const isMyTurn = gameState && gameState.currentPlayerId === user.id;

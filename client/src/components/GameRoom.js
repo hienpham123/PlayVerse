@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../App.css';
 import { socket } from '../services/socket';
-import TienLenGame from './games/TienLenGame';
-import SamLocGame from './games/SamLocGame';
-import CoVayGame from './games/CoVayGame';
-import CoVuaGame from './games/CoVuaGame';
-import CoTuongGame from './games/CoTuongGame';
-import XOGame from './games/XOGame';
-import TaiXiuGame from './games/TaiXiuGame';
+import TienLenGame from '../games/TienLen/TienLenGame';
+import SamLocGame from '../games/SamLoc/SamLocGame';
+import CoVayGame from '../games/CoVay/CoVayGame';
+import CoVuaGame from '../games/CoVua/CoVuaGame';
+import XOGame from '../games/XO/XOGame';
+import TaiXiuGame from '../games/TaiXiu/TaiXiuGame';
 import './GameRoom.css';
 
 function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
@@ -17,6 +16,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
   const [messages, setMessages] = useState(initialRoom?.messages ? [...initialRoom.messages] : []);
   const [chatMessage, setChatMessage] = useState('');
   const [isSpectator, setIsSpectator] = useState(false);
+  const [showAddBotMenu, setShowAddBotMenu] = useState(false);
   const messagesEndRef = useRef(null);
   const chatMessagesRef = useRef(null);
   const lastMessageCountRef = useRef(0);
@@ -73,6 +73,15 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       localStorage.setItem('currentRoom', JSON.stringify(updatedRoom));
     });
 
+    socket.on('room-deleted', ({ roomId }) => {
+      // Nếu room hiện tại bị xóa, tự động rời phòng
+      if (room && room.id === roomId) {
+        console.log('Room deleted, leaving...');
+        localStorage.removeItem('currentRoom');
+        onLeaveRoom();
+      }
+    });
+
     socket.on('joined-room', ({ room: joinedRoom, isSpectator: spectatorFlag }) => {
       setRoom(joinedRoom);
       if (joinedRoom.gameState) {
@@ -126,6 +135,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       socket.off('joined-room');
       socket.off('error');
       socket.off('chat-message');
+      socket.off('room-deleted');
     };
   }, [user.id, room?.id]);
 
@@ -290,7 +300,6 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
       'covua': 'Cờ vua',
-      'cotuong': 'Cờ tướng',
       'xo': 'Cờ XO',
       'taixiu': 'Tài Xỉu'
     };
@@ -323,10 +332,90 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
           <h2>Đang chờ người chơi...</h2>
           <div className="players-list">
             {room.players.map(player => (
-              <div key={player.id} className="player-item">
-                {player.username} {player.id === room.hostId && '(Chủ phòng)'}
+              <div key={player.id} className={`player-item ${player.isBot ? 'bot-player' : ''}`}>
+                <span>
+                  {player.username} 
+                  {player.id === room.hostId && ' (Chủ phòng)'}
+                  {player.isBot && ' 🤖'}
+                </span>
+                {player.isBot && room.hostId === user.id && (
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => {
+                      socket.emit('remove-bot', { roomId: room.id, botId: player.id });
+                    }}
+                    style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '12px' }}
+                  >
+                    Xóa
+                  </button>
+                )}
               </div>
             ))}
+            {room.players.length < room.maxPlayers && room.hostId === user.id && (
+              <div className="add-bot-container" style={{ position: 'relative' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowAddBotMenu(!showAddBotMenu)}
+                  style={{ marginTop: '10px' }}
+                >
+                  ➕ Thêm Bot
+                </button>
+                {showAddBotMenu && (
+                  <div className="add-bot-menu" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    backgroundColor: 'white',
+                    border: '1px solid #ccc',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    marginTop: '5px',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    zIndex: 1000,
+                    minWidth: '200px'
+                  }}>
+                    <h4 style={{ marginTop: 0, marginBottom: '10px' }}>Chọn độ khó bot:</h4>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        socket.emit('add-bot', { roomId: room.id, difficulty: 'easy' });
+                        setShowAddBotMenu(false);
+                      }}
+                      style={{ width: '100%', marginBottom: '5px', backgroundColor: '#4CAF50', color: 'white' }}
+                    >
+                      🤖 Bot Dễ
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        socket.emit('add-bot', { roomId: room.id, difficulty: 'medium' });
+                        setShowAddBotMenu(false);
+                      }}
+                      style={{ width: '100%', marginBottom: '5px', backgroundColor: '#FF9800', color: 'white' }}
+                    >
+                      🤖 Bot Trung bình
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => {
+                        socket.emit('add-bot', { roomId: room.id, difficulty: 'hard' });
+                        setShowAddBotMenu(false);
+                      }}
+                      style={{ width: '100%', backgroundColor: '#F44336', color: 'white' }}
+                    >
+                      🤖 Bot Khó
+                    </button>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setShowAddBotMenu(false)}
+                      style={{ width: '100%', marginTop: '5px' }}
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           {room.hostId === user.id && (
             <button
@@ -455,22 +544,6 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
             />
           )}
 
-          {room.gameType === 'cotuong' && gameState && (
-            <CoTuongGame
-              user={user}
-              room={room}
-              gameState={gameState}
-              onAction={(action, data) => {
-                socket.emit('game-action', {
-                  roomId: room.id,
-                  userId: user.id,
-                  action,
-                  data
-                });
-              }}
-            />
-          )}
-
           {room.gameType === 'xo' && gameState && (
             <XOGame
               user={user}
@@ -502,6 +575,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
               }}
             />
           )}
+
           </div>
 
           {/* Chat và danh sách khán giả */}

@@ -27,9 +27,15 @@ function Lobby({ user, onLogout, onJoinRoom }) {
       setRooms(updatedRooms);
     });
 
+    socket.on('room-deleted', ({ roomId }) => {
+      // Xóa room khỏi danh sách nếu bị xóa
+      setRooms(prev => prev.filter(r => r.id !== roomId));
+    });
+
     return () => {
       socket.off('room-created');
       socket.off('rooms-updated');
+      socket.off('room-deleted');
     };
   }, []);
 
@@ -74,7 +80,6 @@ function Lobby({ user, onLogout, onJoinRoom }) {
       'samloc': 'Sâm lốc',
       'covay': 'Cờ vây',
       'covua': 'Cờ vua',
-      'cotuong': 'Cờ tướng',
       'xo': 'Cờ XO',
       'taixiu': 'Tài Xỉu'
     };
@@ -109,7 +114,6 @@ function Lobby({ user, onLogout, onJoinRoom }) {
               { value: 'samloc', name: 'Sâm lốc', icon: '🎴' },
               { value: 'covay', name: 'Cờ vây', icon: '⚫' },
               { value: 'covua', name: 'Cờ vua', icon: '♔' },
-              { value: 'cotuong', name: 'Cờ tướng', icon: '將' },
               { value: 'xo', name: 'Cờ XO', icon: '⭕' },
               { value: 'taixiu', name: 'Tài Xỉu', icon: '🎲' }
             ].map(game => (
@@ -194,9 +198,9 @@ function Lobby({ user, onLogout, onJoinRoom }) {
                               className="btn btn-primary"
                               style={{ width: '100%', marginTop: '10px' }}
                               onClick={() => handleJoinRoom(room)}
-                              disabled={room.players.length >= room.maxPlayers && !['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType)}
+                              disabled={room.players.length >= room.maxPlayers && !['xo', 'covua', 'covay', 'taixiu'].includes(room.gameType)}
                             >
-                              {room.players.length >= room.maxPlayers && ['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType) 
+                              {room.players.length >= room.maxPlayers && ['xo', 'covua', 'covay', 'taixiu'].includes(room.gameType) 
                                 ? 'Xem trận đấu' 
                                 : room.players.length >= room.maxPlayers 
                                   ? 'Phòng đầy' 
@@ -214,7 +218,7 @@ function Lobby({ user, onLogout, onJoinRoom }) {
                     <h2>Trận đấu đang diễn ra ({playingRooms.length})</h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px', marginTop: '20px' }}>
                       {playingRooms.map(room => {
-                        const canSpectate = ['xo', 'covua', 'cotuong', 'covay', 'taixiu'].includes(room.gameType);
+                        const canSpectate = ['xo', 'covua', 'covay', 'taixiu'].includes(room.gameType);
                         const isPlayerInRoom = room.players.some(p => p.id === user.id);
                         const isSpectatorInRoom = room.spectators?.some(s => s.id === user.id);
                         const canJoin = canSpectate && !isPlayerInRoom && !isSpectatorInRoom;

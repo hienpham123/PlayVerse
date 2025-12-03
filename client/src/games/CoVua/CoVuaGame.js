@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import ChessBoard from '../ChessBoard';
+import ChessBoard from '../../components/ChessBoard';
 import '../../App.css';
-import '../GameRoom.css';
+import '../../components/GameRoom.css';
 
 function CoVuaGame({ user, room, gameState, onAction }) {
   const [selectedPiece, setSelectedPiece] = useState(null);
