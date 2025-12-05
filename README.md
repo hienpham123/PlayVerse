@@ -153,6 +153,18 @@ REACT_APP_API_URL=http://YOUR_IP:3001/api
 - **Backend**: Node.js, Express, Socket.io
 - **Real-time**: WebSocket (Socket.io)
 
+## 🌐 Deploy lên Mạng
+
+Bạn muốn deploy ứng dụng lên mạng để mọi người vào chơi cùng?
+
+👉 **Xem hướng dẫn deploy chi tiết**: [DEPLOY.md](./DEPLOY.md)
+
+**Tóm tắt nhanh**:
+- Frontend: Deploy lên Netlify (miễn phí)
+- Backend: Deploy lên Render.com (miễn phí)
+
+Hoặc xem file `QUICK_START_DEPLOY.txt` để có hướng dẫn nhanh nhất!
+
 ## 📝 License
 
 MIT

@@ -10,8 +10,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: process.env.FRONTEND_URL || "*", // Cho phép Netlify domain hoặc tất cả
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
