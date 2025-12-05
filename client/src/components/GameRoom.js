@@ -103,7 +103,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       if (message.includes('Không thể thêm người chơi vào phòng') || message.includes('không thể thêm người chơi vào phòng')) {
         // Kiểm tra xem user có phải là spectator không
         const isUserSpectator = room?.spectators?.some(s => s.id === user.id) || 
-                                room?.status === 'playing' && !room?.players?.some(p => p.id === user.id);
+                                (room?.status === 'playing' && !room?.players?.some(p => p.id === user.id));
         if (isUserSpectator) {
           // Không hiển thị lỗi này cho spectator
           return;
@@ -137,6 +137,7 @@ function GameRoom({ user, room: initialRoom, onLeaveRoom }) {
       socket.off('chat-message');
       socket.off('room-deleted');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id, room?.id]);
 
   useEffect(() => {

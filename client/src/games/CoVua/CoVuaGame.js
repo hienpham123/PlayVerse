@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ChessBoard from '../../components/ChessBoard';
 import '../../App.css';
 import '../../components/GameRoom.css';
 
 function CoVuaGame({ user, room, gameState, onAction }) {
-  const [selectedPiece, setSelectedPiece] = useState(null);
   const [promotionModal, setPromotionModal] = useState(null);
   const isMyTurn = gameState && gameState.currentPlayerId === user.id;
   const isWhite = gameState && gameState.myColor === 'white';
   const validMoves = gameState?.validMoves || [];
-
-  useEffect(() => {
-    // Reset selection when turn changes
-    setSelectedPiece(null);
-  }, [gameState?.currentPlayerId]);
 
   const handleCellClick = (fromRow, fromCol, toRow, toCol) => {
     if (!isMyTurn) return;

@@ -43,7 +43,6 @@ function DiceFace({ value }) {
 
 function TaiXiuGame({ user, room, gameState, onAction }) {
   const [betAmount, setBetAmount] = useState(100);
-  const [selectedChoice, setSelectedChoice] = useState(null);
   const [timeLeft, setTimeLeft] = useState(20);
   const [resultTimeLeft, setResultTimeLeft] = useState(5);
   const [localRevealedDice, setLocalRevealedDice] = useState([false, false, false]); // Local state để UI mượt mà
@@ -51,7 +50,6 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
   const [dragStartY, setDragStartY] = useState(0);
   const [currentDragY, setCurrentDragY] = useState(0);
   const isSpectator = gameState?.isSpectator || false;
-  const serverRevealedDice = gameState?.revealedDice || [false, false, false];
   const allDiceRevealed = gameState?.allDiceRevealed || false;
   const status = gameState?.status || 'betting';
   const dice = gameState?.dice || [null, null, null];
@@ -104,10 +102,11 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
 
   // Sync revealed dice from server
   useEffect(() => {
+    const serverRevealedDice = gameState?.revealedDice || [false, false, false];
     if (serverRevealedDice) {
       setLocalRevealedDice([...serverRevealedDice]);
     }
-  }, [serverRevealedDice]);
+  }, [gameState?.revealedDice]);
 
   // Reset revealed dice when new round starts
   useEffect(() => {
@@ -128,7 +127,6 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
       return;
     }
 
-    setSelectedChoice(choice);
     onAction('place-bet', { choice, amount: betAmount });
   };
 
@@ -136,10 +134,6 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
 
   const isWinner = (playerId) => {
     return winners.some(w => w.playerId === playerId);
-  };
-
-  const hasBet = (playerId) => {
-    return players.find(p => p.id === playerId)?.hasBet || false;
   };
 
   // Handle mouse down - start dragging
@@ -162,6 +156,7 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
 
     const handleMouseUp = () => {
       // Nếu kéo đủ xa (hơn 80px) và chưa được reveal thì emit action lên server
+      const serverRevealedDice = gameState?.revealedDice || [false, false, false];
       if (currentDragY > 80 && draggingIndex !== null && !serverRevealedDice[draggingIndex]) {
         // Emit action lên server - server sẽ broadcast cho tất cả người chơi
         onAction('reveal-dice', { index: draggingIndex });
@@ -179,7 +174,7 @@ function TaiXiuGame({ user, room, gameState, onAction }) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [draggingIndex, dragStartY, currentDragY]);
+  }, [draggingIndex, dragStartY, currentDragY, gameState?.revealedDice, onAction]);
 
   return (
     <div className="taixiu-game">
