@@ -49,7 +49,7 @@ function TienLenGame({ user, room, gameState, onAction }) {
               <Card key={index} card={card} size="small" />
             ))}
           </div>
-          <p>Người đánh: {gameState.lastPlayerId === user.id ? 'Bạn' : 'Đối thủ'}</p>
+          <p>Người đánh: {gameState.lastPlayerId === user.id ? 'Bạn' : room.players.find(p => p.id === gameState.lastPlayerId)?.username || 'Đối thủ'}</p>
         </div>
       )}
 
