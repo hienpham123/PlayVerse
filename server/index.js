@@ -135,7 +135,8 @@ function triggerBotMoveAndBroadcast(roomId, botId, gameType) {
     }
     
     // Kiểm tra nếu game chưa kết thúc, check xem có bot tiếp theo cần chơi không
-    if (!botResult.data?.gameOver && updatedRoom.gameState.status === 'playing') {
+    // Sử dụng room.status thay vì gameState.status vì TienLenGame không có status trong gameState
+    if (!botResult.data?.gameOver && updatedRoom.status === 'playing') {
       setTimeout(() => {
         const freshRoom = gameManager.getRoom(roomId);
         if (freshRoom) {
