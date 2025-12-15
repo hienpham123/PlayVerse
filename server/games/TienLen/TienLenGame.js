@@ -1,7 +1,15 @@
 class TienLenGame {
-  constructor(players) {
+  constructor(players, startPlayerId = null) {
     this.players = players;
-    this.currentPlayerIndex = 0;
+    
+    // Nếu có startPlayerId (người thắng lượt trước), cho họ đánh trước
+    if (startPlayerId) {
+      const startPlayerIndex = this.players.findIndex(p => p.id === startPlayerId);
+      this.currentPlayerIndex = startPlayerIndex >= 0 ? startPlayerIndex : 0;
+    } else {
+      this.currentPlayerIndex = 0;
+    }
+    
     this.deck = this.createDeck();
     this.hands = {};
     this.lastPlay = null;

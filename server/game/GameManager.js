@@ -193,6 +193,14 @@ class GameManager {
     // Kiểm tra số người chơi (bao gồm cả bot)
     if (room.players.length < room.minPlayers) return false;
 
+    // Lưu thông tin lượt trước trước khi reset (cho Tiến lên và Sâm lốc)
+    let lastWinner = null;
+    let lastPlayerCount = null;
+    if (room.gameType === 'tienlen' || room.gameType === 'samloc') {
+      lastWinner = room.lastWinner;
+      lastPlayerCount = room.lastPlayerCount;
+    }
+    
     // Reset game state trước khi bắt đầu ván mới
     room.gameState = null;
     room.winner = null;
@@ -210,7 +218,17 @@ class GameManager {
         difficulty: p.difficulty || 'medium'
       }));
       
-      room.gameState = new TienLenGame(playersWithBotInfo);
+      // Xác định người đánh đầu tiên
+      let startPlayerId = null;
+      if (lastWinner && lastPlayerCount === playersToUse.length) {
+        // Nếu có người thắng lượt trước và số người giống nhau
+        const winnerStillInGame = playersWithBotInfo.find(p => p.id === lastWinner);
+        if (winnerStillInGame) {
+          startPlayerId = lastWinner;
+        }
+      }
+      
+      room.gameState = new TienLenGame(playersWithBotInfo, startPlayerId);
       
       // Lưu bot info vào room để dùng khi bot chơi
       room.bots = playersWithBotInfo.filter(p => p.isBot).map(bot => ({
@@ -228,7 +246,17 @@ class GameManager {
         difficulty: p.difficulty || 'medium'
       }));
       
-      room.gameState = new SamLocGame(playersWithBotInfo);
+      // Xác định người đánh đầu tiên
+      let startPlayerId = null;
+      if (lastWinner && lastPlayerCount === playersToUse.length) {
+        // Nếu có người thắng lượt trước và số người giống nhau
+        const winnerStillInGame = playersWithBotInfo.find(p => p.id === lastWinner);
+        if (winnerStillInGame) {
+          startPlayerId = lastWinner;
+        }
+      }
+      
+      room.gameState = new SamLocGame(playersWithBotInfo, startPlayerId);
       
       // Lưu bot info vào room để dùng khi bot chơi
       room.bots = playersWithBotInfo.filter(p => p.isBot).map(bot => ({
@@ -284,6 +312,12 @@ class GameManager {
     if (result.success && result.data && result.data.gameOver) {
       room.status = 'finished';
       room.winner = result.data.winner;
+      
+      // Lưu thông tin lượt trước cho Tiến lên và Sâm lốc
+      if (room.gameType === 'tienlen' || room.gameType === 'samloc') {
+        room.lastWinner = result.data.winner;
+        room.lastPlayerCount = room.players.length;
+      }
     }
 
     return result;
